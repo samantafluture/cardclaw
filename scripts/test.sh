@@ -128,6 +128,7 @@ run_host_tests() {
         -I../../main \
         -I. \
         -DTEST_BUILD \
+        -D_POSIX_C_SOURCE=200809L \
         test_ratelimit.c \
         test_ratelimit_runner.c \
         mock_memory.c \
