@@ -8,6 +8,7 @@
 #include "cron.h"
 #include "ratelimit.h"
 #include "ota.h"
+#include "http_gate.h"
 #include "boot_guard.h"
 #include "nvs_keys.h"
 #include "messages.h"
@@ -395,6 +396,7 @@ void app_main(void)
 
     // 1. Initialize NVS
     ESP_ERROR_CHECK(memory_init());
+    ESP_ERROR_CHECK(http_gate_init());
 
     // 2. Initialize OTA (check for pending rollback)
     ota_init();

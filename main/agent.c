@@ -8,6 +8,7 @@
 #include "ratelimit.h"
 #include "memory.h"
 #include "nvs_keys.h"
+#include "telegram.h"
 #include "cJSON.h"
 #include "esp_timer.h"
 #include "esp_log.h"
@@ -585,6 +586,7 @@ static void process_message(const char *user_message, int64_t reply_chat_id)
     int history_turn_start = s_history_len;
     bool is_non_command_message = !is_slash_command(user_message);
     bool is_cron_trigger = is_cron_trigger_message(user_message);
+    bool telegram_polling_paused = false;
     request_metrics_t metrics = {
         .started_us = esp_timer_get_time(),
         .llm_us_total = 0,
@@ -679,6 +681,9 @@ static void process_message(const char *user_message, int64_t reply_chat_id)
     int tool_count;
     const tool_def_t *tools = tools_get_all(&tool_count);
 
+    telegram_pause_polling();
+    telegram_polling_paused = true;
+
     // Add user message to history
     history_add("user", user_message, false, false, NULL, NULL);
 
@@ -703,6 +708,8 @@ static void process_message(const char *user_message, int64_t reply_chat_id)
             ESP_LOGE(TAG, "Failed to build request JSON");
             history_rollback_to(history_turn_start, "request build failed");
             send_response("Error: Failed to build request", reply_chat_id);
+            telegram_resume_polling();
+            telegram_polling_paused = false;
             metrics_log_request(&metrics, "request_build_error");
             return;
         }
@@ -715,6 +722,8 @@ static void process_message(const char *user_message, int64_t reply_chat_id)
             free(request);
             history_rollback_to(history_turn_start, "rate limited");
             send_response(rate_reason, reply_chat_id);
+            telegram_resume_polling();
+            telegram_polling_paused = false;
             metrics_log_request(&metrics, "rate_limited");
             return;
         }
@@ -784,6 +793,8 @@ static void process_message(const char *user_message, int64_t reply_chat_id)
             ESP_LOGE(TAG, "LLM request failed after %d retries", LLM_MAX_RETRIES);
             history_rollback_to(history_turn_start, "llm request failed");
             send_response("Error: Failed to contact LLM API after retries", reply_chat_id);
+            telegram_resume_polling();
+            telegram_polling_paused = false;
             metrics_log_request(&metrics, "llm_error");
             return;
         }
@@ -805,6 +816,8 @@ static void process_message(const char *user_message, int64_t reply_chat_id)
             history_rollback_to(history_turn_start, "llm response parse failed");
             send_response("Error: Failed to parse LLM response", reply_chat_id);
             json_free_parsed_response();
+            telegram_resume_polling();
+            telegram_polling_paused = false;
             metrics_log_request(&metrics, "parse_error");
             return;
         }
@@ -879,6 +892,8 @@ static void process_message(const char *user_message, int64_t reply_chat_id)
         ESP_LOGW(TAG, "Max tool rounds reached");
         history_add("assistant", "(Reached max tool iterations)", false, false, NULL, NULL);
         send_response("(Reached max tool iterations)", reply_chat_id);
+        telegram_resume_polling();
+        telegram_polling_paused = false;
         metrics_log_request(&metrics, "max_rounds");
         return;
     }
@@ -887,6 +902,10 @@ static void process_message(const char *user_message, int64_t reply_chat_id)
         strncpy(s_last_non_command_text, user_message, sizeof(s_last_non_command_text) - 1);
         s_last_non_command_text[sizeof(s_last_non_command_text) - 1] = '\0';
         s_last_non_command_response_us = esp_timer_get_time();
+    }
+
+    if (telegram_polling_paused) {
+        telegram_resume_polling();
     }
 
     metrics_log_request(&metrics, "success");

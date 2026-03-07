@@ -12,6 +12,10 @@ esp_err_t telegram_init(void);
 // Start Telegram polling task
 esp_err_t telegram_start(QueueHandle_t input_queue, QueueHandle_t output_queue);
 
+// Temporarily prevent new Telegram long-polls from starting.
+void telegram_pause_polling(void);
+void telegram_resume_polling(void);
+
 // Send a message to the primary configured chat
 esp_err_t telegram_send(const char *text);
 

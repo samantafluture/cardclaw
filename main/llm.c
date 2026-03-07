@@ -2,8 +2,10 @@
 #include "llm_auth.h"
 #include "channel.h"
 #include "config.h"
+#include "http_gate.h"
 #include "memory.h"
 #include "nvs_keys.h"
+#include "telegram_poll_policy.h"
 #include "text_buffer.h"
 #include "esp_http_client.h"
 #include "esp_log.h"
@@ -646,6 +648,8 @@ esp_err_t llm_request(const char *request_json, char *response_buf, size_t respo
     net_diag_snapshot_t snapshot_before = {0};
     net_diag_snapshot_t snapshot_after = {0};
     int status = -1;
+    int http_gate_wait_ms = 0;
+    bool gate_acquired = false;
 
     capture_net_diag_snapshot(&snapshot_before);
 
@@ -655,6 +659,16 @@ esp_err_t llm_request(const char *request_json, char *response_buf, size_t respo
         log_http_diag("llm_request", NULL, ESP_ERR_INVALID_STATE, -1, 0, false,
                       started_us, NULL, &snapshot_before, &snapshot_after);
         return ESP_ERR_INVALID_STATE;
+    }
+
+    http_gate_wait_ms = (telegram_poll_timeout_for_backend(s_backend) * 1000) + 1000;
+    gate_acquired = http_gate_acquire("llm_request", pdMS_TO_TICKS(http_gate_wait_ms));
+    if (!gate_acquired) {
+        ESP_LOGE(TAG, "Timed out waiting for HTTP gate");
+        capture_net_diag_snapshot(&snapshot_after);
+        log_http_diag("llm_request", NULL, ESP_ERR_TIMEOUT, -1, 0, false,
+                      started_us, NULL, &snapshot_before, &snapshot_after);
+        return ESP_ERR_TIMEOUT;
     }
 
     // Thread-safe response context
@@ -679,6 +693,7 @@ esp_err_t llm_request(const char *request_json, char *response_buf, size_t respo
         capture_net_diag_snapshot(&snapshot_after);
         log_http_diag("llm_request", NULL, ESP_FAIL, -1, 0, false,
                       started_us, NULL, &snapshot_before, &snapshot_after);
+        http_gate_release();
         return ESP_FAIL;
     }
 
@@ -698,6 +713,7 @@ esp_err_t llm_request(const char *request_json, char *response_buf, size_t respo
         if (!llm_build_bearer_auth_header(s_api_key, auth_header, sizeof(auth_header))) {
             ESP_LOGE(TAG, "API key length exceeds supported authorization header capacity");
             esp_http_client_cleanup(client);
+            http_gate_release();
             return ESP_ERR_INVALID_SIZE;
         }
         esp_http_client_set_header(client, "Authorization", auth_header);
@@ -737,6 +753,7 @@ esp_err_t llm_request(const char *request_json, char *response_buf, size_t respo
                   started_us, &ctx, &snapshot_before, &snapshot_after);
 
     esp_http_client_cleanup(client);
+    http_gate_release();
 
     return err;
 #endif

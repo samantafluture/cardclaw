@@ -5,6 +5,7 @@ idf_component_register(
         "channel.c"
         "llm.c"
         "llm_auth.c"
+        "http_gate.c"
         "tools.c"
         "tools_common.c"
         "gpio_policy.c"

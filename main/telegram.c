@@ -1,5 +1,6 @@
 #include "telegram.h"
 #include "config.h"
+#include "http_gate.h"
 #include "messages.h"
 #include "memory.h"
 #include "nvs_keys.h"
@@ -39,6 +40,8 @@ static telegram_msg_t s_send_msg;
 static uint32_t s_stale_only_poll_streak = 0;
 static uint32_t s_poll_sequence = 0;
 static int64_t s_last_stale_resync_us = 0;
+static portMUX_TYPE s_poll_pause_mux = portMUX_INITIALIZER_UNLOCKED;
+static uint32_t s_poll_pause_count = 0;
 
 // Exponential backoff state
 static int s_consecutive_failures = 0;
@@ -62,6 +65,51 @@ typedef struct {
 } net_diag_snapshot_t;
 
 static esp_err_t telegram_flush_pending_updates(void);
+
+static bool telegram_polling_is_paused(void)
+{
+    bool paused = false;
+
+    taskENTER_CRITICAL(&s_poll_pause_mux);
+    paused = (s_poll_pause_count > 0);
+    taskEXIT_CRITICAL(&s_poll_pause_mux);
+
+    return paused;
+}
+
+void telegram_pause_polling(void)
+{
+    uint32_t pause_count = 0;
+
+    taskENTER_CRITICAL(&s_poll_pause_mux);
+    s_poll_pause_count++;
+    pause_count = s_poll_pause_count;
+    taskEXIT_CRITICAL(&s_poll_pause_mux);
+
+    ESP_LOGD(TAG, "Telegram polling paused (count=%u)", (unsigned)pause_count);
+}
+
+void telegram_resume_polling(void)
+{
+    uint32_t pause_count = 0;
+    bool underflow = false;
+
+    taskENTER_CRITICAL(&s_poll_pause_mux);
+    if (s_poll_pause_count == 0) {
+        underflow = true;
+    } else {
+        s_poll_pause_count--;
+    }
+    pause_count = s_poll_pause_count;
+    taskEXIT_CRITICAL(&s_poll_pause_mux);
+
+    if (underflow) {
+        ESP_LOGW(TAG, "telegram_resume_polling called without a matching pause");
+        return;
+    }
+
+    ESP_LOGD(TAG, "Telegram polling resumed (count=%u)", (unsigned)pause_count);
+}
 
 static const char *http_transport_name(esp_http_client_transport_t transport)
 {
@@ -409,6 +457,7 @@ static esp_err_t telegram_send_to_chat(int64_t chat_id, const char *text)
     int64_t started_us = esp_timer_get_time();
     net_diag_snapshot_t snapshot_before = {0};
     net_diag_snapshot_t snapshot_after = {0};
+    bool gate_acquired = false;
 
     capture_net_diag_snapshot(&snapshot_before);
 
@@ -437,8 +486,18 @@ static esp_err_t telegram_send_to_chat(int64_t chat_id, const char *text)
         return ESP_ERR_NO_MEM;
     }
 
+    gate_acquired = http_gate_acquire("telegram_send", pdMS_TO_TICKS(HTTP_TIMEOUT_MS + 1000));
+    if (!gate_acquired) {
+        capture_net_diag_snapshot(&snapshot_after);
+        log_http_diag("sendMessage", NULL, ESP_ERR_TIMEOUT, -1, started_us, 0, 0, 0, 0, 0,
+                      &snapshot_before, &snapshot_after);
+        free(body);
+        return ESP_ERR_TIMEOUT;
+    }
+
     ctx = calloc(1, sizeof(*ctx));
     if (!ctx) {
+        http_gate_release();
         free(body);
         return ESP_ERR_NO_MEM;
     }
@@ -459,6 +518,7 @@ static esp_err_t telegram_send_to_chat(int64_t chat_id, const char *text)
                       &snapshot_before, &snapshot_after);
         free(body);
         free(ctx);
+        http_gate_release();
         return ESP_FAIL;
     }
 
@@ -486,6 +546,7 @@ static esp_err_t telegram_send_to_chat(int64_t chat_id, const char *text)
     esp_http_client_cleanup(client);
     free(body);
     free(ctx);
+    http_gate_release();
     return err;
 }
 
@@ -517,6 +578,11 @@ static esp_err_t telegram_poll(void)
     int poll_timeout_s = telegram_poll_timeout_for_backend(llm_get_backend());
     net_diag_snapshot_t snapshot_before = {0};
     net_diag_snapshot_t snapshot_after = {0};
+    bool gate_acquired = false;
+
+    if (telegram_polling_is_paused()) {
+        return ESP_OK;
+    }
 
     capture_net_diag_snapshot(&snapshot_before);
 
@@ -545,6 +611,12 @@ static esp_err_t telegram_poll(void)
         return ESP_ERR_NO_MEM;
     }
 
+    gate_acquired = http_gate_acquire("telegram_poll", 0);
+    if (!gate_acquired) {
+        free(ctx);
+        return ESP_OK;
+    }
+
     esp_http_client_config_t config = {
         .url = url,
         .event_handler = http_event_handler,
@@ -560,6 +632,7 @@ static esp_err_t telegram_poll(void)
         log_http_diag("getUpdates", NULL, ESP_FAIL, -1, started_us, 0,
                       0, 0, 0, poll_seq, &snapshot_before, &snapshot_after);
         free(ctx);
+        http_gate_release();
         return ESP_FAIL;
     }
 
@@ -572,11 +645,13 @@ static esp_err_t telegram_poll(void)
         log_http_diag("getUpdates", client, err, status, started_us, ctx->len,
                       0, 0, 0, poll_seq, &snapshot_before, &snapshot_after);
         esp_http_client_cleanup(client);
+        http_gate_release();
         free(ctx);
         return ESP_FAIL;
     }
 
     esp_http_client_cleanup(client);
+    http_gate_release();
     client = NULL;
 
     if (ctx->truncated) {
@@ -798,6 +873,7 @@ static esp_err_t telegram_flush_pending_updates(void)
     int64_t started_us = esp_timer_get_time();
     net_diag_snapshot_t snapshot_before = {0};
     net_diag_snapshot_t snapshot_after = {0};
+    bool gate_acquired = false;
 
     capture_net_diag_snapshot(&snapshot_before);
 
@@ -810,6 +886,15 @@ static esp_err_t telegram_flush_pending_updates(void)
         log_http_diag("flush getUpdates", NULL, ESP_ERR_NO_MEM, -1, started_us, 0,
                       0, 0, 0, 0, &snapshot_before, &snapshot_after);
         return ESP_ERR_NO_MEM;
+    }
+
+    gate_acquired = http_gate_acquire("telegram_flush", pdMS_TO_TICKS(HTTP_TIMEOUT_MS + 1000));
+    if (!gate_acquired) {
+        capture_net_diag_snapshot(&snapshot_after);
+        log_http_diag("flush getUpdates", NULL, ESP_ERR_TIMEOUT, -1, started_us, 0,
+                      0, 0, 0, 0, &snapshot_before, &snapshot_after);
+        free(ctx);
+        return ESP_ERR_TIMEOUT;
     }
 
     esp_http_client_config_t config = {
@@ -826,6 +911,7 @@ static esp_err_t telegram_flush_pending_updates(void)
         log_http_diag("flush getUpdates", NULL, ESP_FAIL, -1, started_us, 0,
                       0, 0, 0, 0, &snapshot_before, &snapshot_after);
         free(ctx);
+        http_gate_release();
         return ESP_FAIL;
     }
 
@@ -838,11 +924,13 @@ static esp_err_t telegram_flush_pending_updates(void)
         log_http_diag("flush getUpdates", client, err, status, started_us, ctx->len,
                       0, 0, 0, 0, &snapshot_before, &snapshot_after);
         esp_http_client_cleanup(client);
+        http_gate_release();
         free(ctx);
         return ESP_FAIL;
     }
 
     esp_http_client_cleanup(client);
+    http_gate_release();
     client = NULL;
 
     int64_t latest_update_id = 0;

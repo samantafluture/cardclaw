@@ -34,6 +34,22 @@ TEST(unknown_backend_falls_back_to_standard_timeout)
     return 0;
 }
 
+TEST(classic_esp32_shortens_standard_backends)
+{
+    ASSERT(telegram_poll_timeout_for_backend_test(LLM_BACKEND_ANTHROPIC, true) ==
+           TELEGRAM_POLL_TIMEOUT_ESP32);
+    ASSERT(telegram_poll_timeout_for_backend_test(LLM_BACKEND_OPENAI, true) ==
+           TELEGRAM_POLL_TIMEOUT_ESP32);
+    return 0;
+}
+
+TEST(classic_esp32_uses_shortest_timeout_for_openrouter)
+{
+    ASSERT(telegram_poll_timeout_for_backend_test(LLM_BACKEND_OPENROUTER, true) ==
+           TELEGRAM_POLL_TIMEOUT_ESP32);
+    return 0;
+}
+
 int test_telegram_poll_policy_all(void)
 {
     int failures = 0;
@@ -56,6 +72,20 @@ int test_telegram_poll_policy_all(void)
 
     printf("  unknown_backend_falls_back_to_standard_timeout... ");
     if (test_unknown_backend_falls_back_to_standard_timeout() == 0) {
+        printf("OK\n");
+    } else {
+        failures++;
+    }
+
+    printf("  classic_esp32_shortens_standard_backends... ");
+    if (test_classic_esp32_shortens_standard_backends() == 0) {
+        printf("OK\n");
+    } else {
+        failures++;
+    }
+
+    printf("  classic_esp32_uses_shortest_timeout_for_openrouter... ");
+    if (test_classic_esp32_uses_shortest_timeout_for_openrouter() == 0) {
         printf("OK\n");
     } else {
         failures++;

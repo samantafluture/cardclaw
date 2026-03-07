@@ -77,9 +77,11 @@ Non-interactive install:
 
 ## Hardware
 
-Tested targets: **ESP32-C3**, **ESP32-S3**, and **ESP32-C6**.
-Other ESP32 variants should work fine (some may require manual ESP-IDF target setup).
-Tests reports are very welcome!
+Tested targets: **ESP32**, **ESP32-C3**, **ESP32-S3**, and **ESP32-C6**.
+Classic **ESP32-WROOM/ESP32 DevKit** boards are supported. On `esp32`, local chat uses
+UART0 automatically and runtime guardrails block `GPIO6-11` because those pins are tied
+to flash/PSRAM.
+Test reports for other ESP32 variants are very welcome!
 
 Recommended starter board: [Seeed XIAO ESP32-C3](https://www.seeedstudio.com/Seeed-XIAO-ESP32C3-p-5431.html)
 

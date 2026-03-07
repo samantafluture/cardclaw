@@ -28,6 +28,26 @@
     } \
 } while(0)
 
+static int s_telegram_pause_calls = 0;
+static int s_telegram_resume_calls = 0;
+static int s_telegram_pause_balance = 0;
+static int s_telegram_pause_max_balance = 0;
+
+void telegram_pause_polling(void)
+{
+    s_telegram_pause_calls++;
+    s_telegram_pause_balance++;
+    if (s_telegram_pause_balance > s_telegram_pause_max_balance) {
+        s_telegram_pause_max_balance = s_telegram_pause_balance;
+    }
+}
+
+void telegram_resume_polling(void)
+{
+    s_telegram_resume_calls++;
+    s_telegram_pause_balance--;
+}
+
 static int recv_channel_text(QueueHandle_t queue, char *out, size_t out_len)
 {
     channel_output_msg_t msg;
@@ -65,6 +85,10 @@ static void reset_state(void)
     mock_llm_reset();
     mock_ratelimit_reset();
     mock_tools_reset();
+    s_telegram_pause_calls = 0;
+    s_telegram_resume_calls = 0;
+    s_telegram_pause_balance = 0;
+    s_telegram_pause_max_balance = 0;
     mock_llm_set_backend(LLM_BACKEND_ANTHROPIC, "mock-anthropic");
     agent_test_reset();
 }
@@ -637,6 +661,83 @@ TEST(telegram_response_preserves_reply_chat_id)
     return 0;
 }
 
+TEST(llm_turn_pauses_telegram_polling)
+{
+    QueueHandle_t channel_q;
+    char text[CHANNEL_TX_BUF_SIZE];
+    const char *success =
+        "{\"content\":[{\"type\":\"text\",\"text\":\"reply\"}],\"stop_reason\":\"end_turn\"}";
+
+    reset_state();
+
+    channel_q = xQueueCreate(2, sizeof(channel_output_msg_t));
+    ASSERT(channel_q != NULL);
+    agent_test_set_queues(channel_q, NULL);
+
+    ASSERT(mock_llm_push_result(ESP_OK, success));
+    agent_test_process_message("hello");
+
+    ASSERT(recv_channel_text(channel_q, text, sizeof(text)) == 1);
+    ASSERT_STR_EQ(text, "reply");
+    ASSERT(s_telegram_pause_calls == 1);
+    ASSERT(s_telegram_resume_calls == 1);
+    ASSERT(s_telegram_pause_balance == 0);
+    ASSERT(s_telegram_pause_max_balance == 1);
+
+    vQueueDelete(channel_q);
+    return 0;
+}
+
+TEST(failed_llm_turn_resumes_telegram_polling)
+{
+    QueueHandle_t channel_q;
+    char text[CHANNEL_TX_BUF_SIZE];
+
+    reset_state();
+
+    channel_q = xQueueCreate(2, sizeof(channel_output_msg_t));
+    ASSERT(channel_q != NULL);
+    agent_test_set_queues(channel_q, NULL);
+
+    ASSERT(mock_llm_push_result(ESP_FAIL, NULL));
+    ASSERT(mock_llm_push_result(ESP_FAIL, NULL));
+    ASSERT(mock_llm_push_result(ESP_FAIL, NULL));
+
+    agent_test_process_message("hello");
+
+    ASSERT(recv_channel_text(channel_q, text, sizeof(text)) == 1);
+    ASSERT_STR_EQ(text, "Error: Failed to contact LLM API after retries");
+    ASSERT(s_telegram_pause_calls == 1);
+    ASSERT(s_telegram_resume_calls == 1);
+    ASSERT(s_telegram_pause_balance == 0);
+    ASSERT(s_telegram_pause_max_balance == 1);
+
+    vQueueDelete(channel_q);
+    return 0;
+}
+
+TEST(command_turn_does_not_pause_telegram_polling)
+{
+    QueueHandle_t channel_q;
+    char text[CHANNEL_TX_BUF_SIZE];
+
+    reset_state();
+
+    channel_q = xQueueCreate(2, sizeof(channel_output_msg_t));
+    ASSERT(channel_q != NULL);
+    agent_test_set_queues(channel_q, NULL);
+
+    agent_test_process_message("/settings");
+
+    ASSERT(recv_channel_text(channel_q, text, sizeof(text)) == 1);
+    ASSERT(s_telegram_pause_calls == 0);
+    ASSERT(s_telegram_resume_calls == 0);
+    ASSERT(s_telegram_pause_balance == 0);
+
+    vQueueDelete(channel_q);
+    return 0;
+}
+
 int test_agent_all(void)
 {
     int failures = 0;
@@ -750,6 +851,27 @@ int test_agent_all(void)
 
     printf("  telegram_response_preserves_reply_chat_id... ");
     if (test_telegram_response_preserves_reply_chat_id() == 0) {
+        printf("OK\n");
+    } else {
+        failures++;
+    }
+
+    printf("  llm_turn_pauses_telegram_polling... ");
+    if (test_llm_turn_pauses_telegram_polling() == 0) {
+        printf("OK\n");
+    } else {
+        failures++;
+    }
+
+    printf("  failed_llm_turn_resumes_telegram_polling... ");
+    if (test_failed_llm_turn_resumes_telegram_polling() == 0) {
+        printf("OK\n");
+    } else {
+        failures++;
+    }
+
+    printf("  command_turn_does_not_pause_telegram_polling... ");
+    if (test_command_turn_does_not_pause_telegram_polling() == 0) {
         printf("OK\n");
     } else {
         failures++;

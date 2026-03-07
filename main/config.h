@@ -143,6 +143,9 @@ typedef enum {
 // OpenRouter can require tighter heap headroom during TLS setup on small targets.
 // Use a shorter Telegram long-poll window only for that backend to reduce overlap.
 #define TELEGRAM_POLL_TIMEOUT_OPENROUTER 8
+// Classic ESP32 can exhaust/fragment heap when Telegram long-poll TLS overlaps with
+// outbound LLM HTTPS on the same device. Keep poll windows shorter on that target.
+#define TELEGRAM_POLL_TIMEOUT_ESP32 5
 #define TELEGRAM_POLL_INTERVAL  100     // ms between poll attempts on error
 #define TELEGRAM_MAX_MSG_LEN    4096    // Max message length
 #define TELEGRAM_FLUSH_ON_START 1       // Drop stale pending updates at startup

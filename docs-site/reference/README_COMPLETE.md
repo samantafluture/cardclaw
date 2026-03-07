@@ -49,8 +49,9 @@ Agent: Done. GPIO2 is now off.
 
 ## Hardware
 
-Tested targets are **ESP32-C3**, **ESP32-S3**, and **ESP32-C6**.
-Other ESP32 variants should work fine (some may require manual ESP-IDF target setup):
+Tested targets are **ESP32**, **ESP32-C3**, **ESP32-S3**, and **ESP32-C6**.
+Classic ESP32-WROOM/DevKit (`esp32` target) is supported and tested. Other ESP32
+variants may work too (some may require manual ESP-IDF target setup):
 
 - Default GPIO tool pin limits are configured for ESP32-C3 dev workflows (`GPIO 2-10`).
 - On classic ESP32-WROOM/DevKit (`esp32` target), runtime guardrails block GPIO6-11 because those pins are wired to SPI flash/PSRAM.
