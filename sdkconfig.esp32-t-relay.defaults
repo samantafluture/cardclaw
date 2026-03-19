@@ -1,0 +1,9 @@
+# LilyGO TTGO T-Relay board preset
+#
+# The onboard relays are wired to:
+#   K1 -> GPIO21
+#   K2 -> GPIO19
+#   K3 -> GPIO18
+#   K4 -> GPIO5
+CONFIG_IDF_TARGET="esp32"
+CONFIG_ZCLAW_GPIO_ALLOWED_PINS="5,18,19,21"

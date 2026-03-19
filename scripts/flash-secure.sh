@@ -37,6 +37,9 @@ normalize_board_preset() {
         esp32s3-box-3|esp32-s3-box-3|box-3|esp-box-3)
             echo "esp32s3-box-3"
             ;;
+        esp32-t-relay|ttgo-t-relay|lilygo-t-relay|t-relay)
+            echo "esp32-t-relay"
+            ;;
         *)
             echo ""
             ;;
@@ -51,7 +54,7 @@ resolve_board_preset() {
     normalized="$(normalize_board_preset "$BOARD_PRESET")"
     if [ -z "$normalized" ]; then
         print_error "Unknown board preset '$BOARD_PRESET'"
-        echo "Supported presets: esp32s3-box-3"
+        echo "Supported presets: esp32s3-box-3, esp32-t-relay"
         return 1
     fi
 
@@ -60,6 +63,10 @@ resolve_board_preset() {
         esp32s3-box-3)
             BOARD_SDKCONFIG_FILE="sdkconfig.esp32s3-box-3.defaults"
             IDF_TARGET_OVERRIDE="esp32s3"
+            ;;
+        esp32-t-relay)
+            BOARD_SDKCONFIG_FILE="sdkconfig.esp32-t-relay.defaults"
+            IDF_TARGET_OVERRIDE="esp32"
             ;;
         *)
             print_error "Unsupported board preset '$BOARD_PRESET'"
@@ -434,11 +441,12 @@ flash_encryption_enabled() {
 }
 
 usage() {
-    echo "Usage: $0 [PORT] [--production] [--kill-monitor] [--board <preset>] [--box-3]"
-    echo "  --production  Burn key with hardware read protection (recommended for deployed devices)"
+    echo "Usage: $0 [PORT] [--production] [--kill-monitor] [--board <preset>] [--box-3] [--t-relay]"
+    echo "  --production    Burn key with hardware read protection (recommended for deployed devices)"
     echo "  --kill-monitor  Stop stale ESP-IDF monitor processes holding the selected port"
-    echo "  --board         Apply a board preset (currently: esp32s3-box-3)"
+    echo "  --board         Apply a board preset (currently: esp32s3-box-3, esp32-t-relay)"
     echo "  --box-3         Alias for --board esp32s3-box-3"
+    echo "  --t-relay       Alias for --board esp32-t-relay"
 }
 
 source_idf_env() {
@@ -491,6 +499,9 @@ while [ $# -gt 0 ]; do
             ;;
         --box-3)
             BOARD_PRESET="esp32s3-box-3"
+            ;;
+        --t-relay)
+            BOARD_PRESET="esp32-t-relay"
             ;;
         --help|-h)
             usage

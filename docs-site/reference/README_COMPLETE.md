@@ -54,7 +54,7 @@ Classic ESP32-WROOM/DevKit (`esp32` target) is supported and tested. Other ESP32
 variants may work too (some may require manual ESP-IDF target setup):
 
 - Default GPIO tool pin limits are configured for ESP32-C3 dev workflows (`GPIO 2-10`).
-- On classic ESP32-WROOM/DevKit (`esp32` target), runtime guardrails block GPIO6-11 because those pins are wired to SPI flash/PSRAM.
+- On classic ESP32-WROOM/DevKit (`esp32` target), runtime guardrails block GPIO6-11 because those pins are wired to SPI flash/PSRAM, so a stock classic-ESP32 build effectively exposes only `GPIO 2-5` until you change GPIO Tool Safety or use a board preset.
 - If your board wiring differs, adjust `zclaw Configuration -> GPIO Tool Safety` in `idf.py menuconfig`.
 - For boards with non-contiguous pins (for example XIAO ESP32S3), set `Allowed GPIO pins list` to a comma-separated whitelist. Example for XIAO ESP32S3 D0-D10: `1,2,3,4,5,6,7,8,9,43,44`
 
@@ -77,6 +77,17 @@ ESP32-S3-BOX-3 preset:
 ```
 
 `--box-3` applies the `esp32s3` target plus board-specific GPIO safety and factory-reset defaults.
+
+LilyGO TTGO T-Relay preset:
+
+```bash
+./scripts/build.sh --t-relay
+./scripts/flash.sh --t-relay /dev/cu.usbserial-0001
+# or encrypted flash:
+./scripts/flash-secure.sh --t-relay /dev/cu.usbserial-0001
+```
+
+`--t-relay` applies the `esp32` target plus a relay-safe GPIO allowlist: `5,18,19,21`.
 
 ## Quick Start
 
@@ -562,6 +573,7 @@ zclaw/
 ├── install.sh          # One-line setup script
 ├── partitions.csv      # Flash partition layout (dual OTA)
 ├── sdkconfig.defaults  # SDK defaults
+├── sdkconfig.esp32-t-relay.defaults # LilyGO TTGO T-Relay preset defaults
 └── sdkconfig.esp32s3-box-3.defaults # ESP32-S3-BOX-3 preset defaults
 ```
 
