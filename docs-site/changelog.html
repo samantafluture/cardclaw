@@ -71,6 +71,11 @@
             </thead>
             <tbody>
               <tr>
+                <td><code>2.13.0</code></td>
+                <td>2026-03-22</td>
+                <td>Minor release: added first-class <code>dht_read</code> support for <code>DHT11</code>/<code>DHT22</code>, added generic raw I2C tools (<code>i2c_scan</code>, <code>i2c_write</code>, <code>i2c_read</code>, <code>i2c_write_read</code>), trimmed TLS features to preserve binary headroom under the <code>888 KiB</code> budget, hardened zero-argument tool schemas for OpenAI-compatible validators, and fixed benchmark counter sequencing for reliable serial soaks.</td>
+              </tr>
+              <tr>
                 <td><code>2.12.1</code></td>
                 <td>2026-03-18</td>
                 <td>Bugfix release: added a first-class <code>esp32-t-relay</code> board preset across build/flash flows for LilyGO TTGO T-Relay boards, aligned firmware app-version metadata with the checked-in release version, clarified the conservative default GPIO policy on classic <code>esp32</code> builds, and added host coverage for the new preset plus target-mismatch guardrails.</td>

@@ -8,6 +8,23 @@ The format is based on Keep a Changelog and this project follows Semantic Versio
 
 - No unreleased changes yet.
 
+## [2.13.0] - 2026-03-22
+
+### Added
+- Added `dht_read` for direct `DHT11` and `DHT22` temperature/humidity reads from a single GPIO pin.
+- Added generic raw I2C bus tools: `i2c_scan`, `i2c_write`, `i2c_read`, and `i2c_write_read`.
+
+### Fixed
+- Trimmed outbound TLS feature usage to recover firmware headroom and keep the classic ESP32 build comfortably under the `888 KiB` binary budget.
+- Hardened built-in tool schema generation so zero-argument tools emit explicit empty object properties accepted by the current OpenAI-compatible tool schema validators.
+- Fixed the host benchmark `--append-counter` path so warmup and measured requests use a monotonic suffix and no longer trip repeated-prompt suppression during serial soaks.
+
+### Docs
+- Updated README and docs-site references for the new DHT and generic I2C tool surface, including guidance on when to use DHT versus raw I2C transactions.
+
+### Tests
+- Added host coverage for DHT decoding/handler behavior, generic I2C policy and transaction paths, zero-argument built-in tool schemas, and benchmark counter sequencing across warmup and measured runs.
+
 ## [2.12.1] - 2026-03-18
 
 ### Fixed
