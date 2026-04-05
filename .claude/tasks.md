@@ -1,6 +1,6 @@
 # Project: CardClaw
 
-> Last agent update: 2026-04-04
+> Last agent update: 2026-04-04 — initial sync
 
 ## Active Sprint
 
