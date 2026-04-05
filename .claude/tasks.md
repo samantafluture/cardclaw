@@ -6,10 +6,10 @@
 
 ### P0 -- Must do now
 
-- [ ] Fork zclaw repository and set up ESP-IDF v5.5+ dev environment (WSL2) `[M]` #setup
+- [ ] Fork zclaw repository and set up ESP-IDF v5.5+ dev environment (WSL2) `[M]` #setup 👤 manual
 - [ ] Create Cardputer ADV board config — sdkconfig.defaults + partition table for 8MB flash `[M]` #setup
-- [ ] Verify zclaw core compiles for ESP32-S3 target `[S]` #setup
-- [ ] Flash and confirm headless mode works (WiFi, Telegram, serial CLI) `[M]` #setup #testing
+- [ ] Verify zclaw core compiles for ESP32-S3 target `[S]` #setup 👤 manual
+- [ ] Flash and confirm headless mode works (WiFi, Telegram, serial CLI) `[M]` #setup #testing 👤 manual
 - [ ] Implement ST7789V2 SPI display driver `[L]` #backend #hal
   - [ ] Minimal terminal renderer (fixed-width font, char grid, auto-scroll)
   - [ ] Status bar (WiFi, battery %, model indicator)
@@ -30,7 +30,7 @@
 - [ ] Token-by-token streaming display as LLM responds `[M]` #backend
 - [ ] Scroll back through conversation history (Fn+Up/Down) `[S]` #backend
 - [ ] Typing/thinking indicator while waiting for LLM response `[S]` #frontend
-- [ ] Set up GitHub repo with MIT license, CONTRIBUTING.md, issue templates `[S]` #devops
+- [ ] Set up GitHub repo with MIT license, CONTRIBUTING.md, issue templates `[S]` #devops 👤 manual
 - [ ] Document build process in README `[S]` #content
 
 ### P2 -- Nice to have
@@ -49,7 +49,7 @@
 - [ ] Theme/color scheme loadable from microSD `[S]` #frontend
 - [ ] Custom tool definitions from microSD (JSON format) `[M]` #backend
 - [ ] Audio feedback — confirmation tones on tool execution `[S]` #backend
-- [ ] Web flasher for browser-based installation `[L]` #devops #launch
+- [ ] Web flasher for browser-based installation `[L]` #devops #launch 👤 manual
 
 ## Blocked
 
