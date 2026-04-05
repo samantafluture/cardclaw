@@ -16,4 +16,4 @@ sdkconfig.old
 # OS
 .DS_Store
 Thumbs.db
-*.Zone.Identifier
+*:Zone.Identifier
