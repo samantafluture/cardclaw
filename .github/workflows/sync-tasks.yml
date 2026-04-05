@@ -1,0 +1,11 @@
+name: Sync Tasks
+on:
+  push:
+    branches: [main]
+    paths: ['.claude/tasks.md']
+jobs:
+  sync:
+    uses: samantafluture/cherryagent/.github/workflows/sync-tasks.yml@main
+    permissions:
+      issues: write
+      contents: read
