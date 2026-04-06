@@ -8,8 +8,8 @@
 
 - [x] Fork zclaw repository and set up ESP-IDF v5.5+ dev environment (WSL2) `[M]` #setup 👤 manual ✅ 2026-04-06
 - [x] Create Cardputer ADV board config — sdkconfig.defaults + partition table for 8MB flash `[M]` #setup ✅ 2026-04-06
-- [ ] Verify zclaw core compiles for ESP32-S3 target `[S]` #setup 👤 manual
-- [ ] Flash and confirm headless mode works (WiFi, Telegram, serial CLI) `[M]` #setup #testing 👤 manual
+- [x] Verify zclaw core compiles for ESP32-S3 target `[S]` #setup 👤 manual ✅ 2026-04-06
+- [x] Flash and confirm headless mode works (WiFi, Telegram, serial CLI) `[M]` #setup #testing 👤 manual ✅ 2026-04-06
 - [ ] Implement ST7789V2 SPI display driver `[L]` #backend #hal
   - [ ] Minimal terminal renderer (fixed-width font, char grid, auto-scroll)
   - [ ] Status bar (WiFi, battery %, model indicator)
