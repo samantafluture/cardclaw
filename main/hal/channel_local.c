@@ -83,9 +83,12 @@ static void local_input_task(void *arg)
 
         case KEY_EVENT_ENTER:
             if (s_line.len > 0) {
-                // Show user message on display
-                char user_line[SCREEN_COLS + 4];
-                snprintf(user_line, sizeof(user_line), "> %s", s_line.buf);
+                // Show user message on display (truncated to screen width)
+                char user_line[SCREEN_COLS + 1];
+                user_line[0] = '>';
+                user_line[1] = ' ';
+                strncpy(user_line + 2, s_line.buf, SCREEN_COLS - 2);
+                user_line[SCREEN_COLS] = '\0';
                 hal_display_append_conv(user_line, COLOR_USER_MSG);
 
                 // Submit to agent via shared inbound queue
