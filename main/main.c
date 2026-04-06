@@ -14,6 +14,8 @@
 #include "nvs_keys.h"
 #include "messages.h"
 #include "gpio_policy.h"
+#include "hal/cardclaw_hal.h"
+#include "hal/channel_local.h"
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -189,7 +191,7 @@ void app_main(void)
         fail_fast_startup("channel_start", startup_err);
     }
 
-    startup_err = agent_start(input_queue, channel_output_queue, NULL);
+    startup_err = agent_start(input_queue, channel_output_queue, NULL, NULL);
     if (startup_err != ESP_OK) {
         fail_fast_startup("agent_start", startup_err);
     }
@@ -226,6 +228,7 @@ void app_main(void)
 
     QueueHandle_t input_queue = xQueueCreate(INPUT_QUEUE_LENGTH, sizeof(channel_msg_t));
     QueueHandle_t channel_output_queue = xQueueCreate(OUTPUT_QUEUE_LENGTH, sizeof(channel_output_msg_t));
+    QueueHandle_t display_output_queue = xQueueCreate(OUTPUT_QUEUE_LENGTH, sizeof(channel_output_msg_t));
     QueueHandle_t telegram_output_queue = NULL;
 #if CONFIG_ZCLAW_STUB_TELEGRAM
     bool telegram_enabled = false;
@@ -236,9 +239,20 @@ void app_main(void)
         telegram_output_queue = xQueueCreate(TELEGRAM_OUTPUT_QUEUE_LENGTH, sizeof(telegram_msg_t));
     }
 
-    if (!input_queue || !channel_output_queue || (telegram_enabled && !telegram_output_queue)) {
+    if (!input_queue || !channel_output_queue || !display_output_queue ||
+        (telegram_enabled && !telegram_output_queue)) {
         ESP_LOGE(TAG, "Failed to create queues");
         esp_restart();
+    }
+
+    // Initialize CardClaw HAL (display + keyboard)
+    esp_err_t hal_err = hal_display_init();
+    if (hal_err != ESP_OK) {
+        ESP_LOGW(TAG, "Display init failed: %s (continuing headless)", esp_err_to_name(hal_err));
+    }
+    hal_err = hal_keyboard_init();
+    if (hal_err != ESP_OK) {
+        ESP_LOGW(TAG, "Keyboard init failed: %s (continuing headless)", esp_err_to_name(hal_err));
     }
 
     esp_err_t startup_err = channel_start(input_queue, channel_output_queue);
@@ -246,7 +260,13 @@ void app_main(void)
         fail_fast_startup("channel_start", startup_err);
     }
 
-    startup_err = agent_start(input_queue, channel_output_queue, telegram_output_queue);
+    // Start local channel (keyboard → agent → display)
+    startup_err = channel_local_start(input_queue, display_output_queue);
+    if (startup_err != ESP_OK) {
+        ESP_LOGW(TAG, "Local channel start failed: %s", esp_err_to_name(startup_err));
+    }
+
+    startup_err = agent_start(input_queue, channel_output_queue, telegram_output_queue, display_output_queue);
     if (startup_err != ESP_OK) {
         fail_fast_startup("agent_start", startup_err);
     }

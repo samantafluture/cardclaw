@@ -9,7 +9,8 @@
 // Start the agent task
 esp_err_t agent_start(QueueHandle_t input_queue,
                       QueueHandle_t channel_output_queue,
-                      QueueHandle_t telegram_output_queue);
+                      QueueHandle_t telegram_output_queue,
+                      QueueHandle_t display_output_queue);
 
 #ifdef TEST_BUILD
 // Test-only helpers to drive agent logic without spawning FreeRTOS tasks.

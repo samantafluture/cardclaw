@@ -38,7 +38,10 @@ idf_component_register(
         "boot_guard.c"
         "user_tools.c"
         "wifi_credentials.c"
-    INCLUDE_DIRS "."
+        "hal/hal_display.c"
+        "hal/hal_keyboard.c"
+        "hal/channel_local.c"
+    INCLUDE_DIRS "." "hal"
     REQUIRES
         nvs_flash
         esp_wifi
@@ -48,6 +51,7 @@ idf_component_register(
         esp_timer
         json
         driver
+        esp_driver_ledc
         lwip
         esp_driver_usb_serial_jtag
         app_update

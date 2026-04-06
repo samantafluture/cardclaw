@@ -29,6 +29,7 @@ static const char *TAG = "agent";
 static QueueHandle_t s_input_queue;
 static QueueHandle_t s_channel_output_queue;
 static QueueHandle_t s_telegram_output_queue;
+static QueueHandle_t s_display_output_queue;
 static int64_t s_last_start_response_us = 0;
 static int64_t s_last_non_command_response_us = 0;
 static char s_last_non_command_text[CHANNEL_RX_BUF_SIZE] = {0};
@@ -172,10 +173,26 @@ static void queue_telegram_response(const char *text, int64_t chat_id)
     }
 }
 
+static void queue_display_response(const char *text)
+{
+    if (!s_display_output_queue) {
+        return;
+    }
+
+    channel_output_msg_t msg;
+    strncpy(msg.text, text, CHANNEL_TX_BUF_SIZE - 1);
+    msg.text[CHANNEL_TX_BUF_SIZE - 1] = '\0';
+
+    if (xQueueSend(s_display_output_queue, &msg, pdMS_TO_TICKS(100)) != pdTRUE) {
+        ESP_LOGW(TAG, "Display output queue full, dropping");
+    }
+}
+
 static void send_response(const char *text, int64_t chat_id)
 {
     queue_channel_response(text);
     queue_telegram_response(text, chat_id);
+    queue_display_response(text);
 }
 
 #ifndef TEST_BUILD
@@ -737,6 +754,7 @@ void agent_test_reset(void)
     memset(s_tool_result_buf, 0, sizeof(s_tool_result_buf));
     s_channel_output_queue = NULL;
     s_telegram_output_queue = NULL;
+    s_display_output_queue = NULL;
     s_last_start_response_us = 0;
     s_last_non_command_response_us = 0;
     memset(s_last_non_command_text, 0, sizeof(s_last_non_command_text));
@@ -781,7 +799,8 @@ static void agent_task(void *arg)
 
 esp_err_t agent_start(QueueHandle_t input_queue,
                       QueueHandle_t channel_output_queue,
-                      QueueHandle_t telegram_output_queue)
+                      QueueHandle_t telegram_output_queue,
+                      QueueHandle_t display_output_queue)
 {
     if (!input_queue || !channel_output_queue) {
         ESP_LOGE(TAG, "Invalid queues for agent startup");
@@ -791,6 +810,7 @@ esp_err_t agent_start(QueueHandle_t input_queue,
     s_input_queue = input_queue;
     s_channel_output_queue = channel_output_queue;
     s_telegram_output_queue = telegram_output_queue;
+    s_display_output_queue = display_output_queue;
     load_persona_from_store();
 
     if (xTaskCreate(agent_task, "agent", AGENT_TASK_STACK_SIZE, NULL,
