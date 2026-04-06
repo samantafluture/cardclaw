@@ -18,30 +18,30 @@
 TEST(extract_valid_bot_id)
 {
     char out[24];
-    ASSERT(telegram_extract_bot_id("8291539104:AAGxpPliHXAghCqdmIlQwPMwcrF-4ibBpgk", out, sizeof(out)));
+    ASSERT(telegram_extract_bot_id("0000000000:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX", out, sizeof(out)));
     ASSERT(out[0] == '8');
-    ASSERT(strcmp(out, "8291539104") == 0);
+    ASSERT(strcmp(out, "0000000000") == 0);
     return 0;
 }
 
 TEST(reject_missing_colon)
 {
     char out[24];
-    ASSERT(!telegram_extract_bot_id("8291539104AAGxpPliHXAghCqdmIlQwPMwcrF-4ibBpgk", out, sizeof(out)));
+    ASSERT(!telegram_extract_bot_id("0000000000XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX", out, sizeof(out)));
     return 0;
 }
 
 TEST(reject_non_numeric_id)
 {
     char out[24];
-    ASSERT(!telegram_extract_bot_id("bot8291539104:AAGxpPliHXAghCqdmIlQwPMwcrF-4ibBpgk", out, sizeof(out)));
+    ASSERT(!telegram_extract_bot_id("bot0000000000:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX", out, sizeof(out)));
     return 0;
 }
 
 TEST(reject_small_output_buffer)
 {
     char out[4];
-    ASSERT(!telegram_extract_bot_id("8291539104:AAGxpPliHXAghCqdmIlQwPMwcrF-4ibBpgk", out, sizeof(out)));
+    ASSERT(!telegram_extract_bot_id("0000000000:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX", out, sizeof(out)));
     return 0;
 }
 
@@ -49,8 +49,8 @@ TEST(reject_null_args)
 {
     char out[24];
     ASSERT(!telegram_extract_bot_id(NULL, out, sizeof(out)));
-    ASSERT(!telegram_extract_bot_id("8291539104:secret", NULL, sizeof(out)));
-    ASSERT(!telegram_extract_bot_id("8291539104:secret", out, 0));
+    ASSERT(!telegram_extract_bot_id("0000000000:secret", NULL, sizeof(out)));
+    ASSERT(!telegram_extract_bot_id("0000000000:secret", out, 0));
     return 0;
 }
 
