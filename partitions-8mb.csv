@@ -1,0 +1,11 @@
+# Name,   Type, SubType, Offset,  Size,   Flags
+# OTA-capable partition table for 8MB flash (Cardputer ADV)
+# App partitions: 2.5MB each (plenty of headroom for ~1MB firmware)
+# LittleFS: 1MB for persistent files (memory, logs, custom tools)
+nvs,      data, nvs,     0x9000,  0x6000,
+nvs_key,  data, nvs_keys,0xf000,  0x1000,
+otadata,  data, ota,     0x10000, 0x2000,
+phy_init, data, phy,     0x12000, 0x1000,
+ota_0,    app,  ota_0,   0x20000, 0x280000,
+ota_1,    app,  ota_1,   0x2A0000,0x280000,
+storage,  data, littlefs,0x520000,0x100000,

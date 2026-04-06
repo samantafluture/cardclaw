@@ -1,0 +1,40 @@
+# M5Stack Cardputer ADV board preset
+# ESP32-S3FN8: 8MB flash, 320KB SRAM, no PSRAM
+
+# Target
+CONFIG_IDF_TARGET="esp32s3"
+
+# Flash — 8MB
+CONFIG_ESPTOOLPY_FLASHSIZE_8MB=y
+CONFIG_ESPTOOLPY_FLASHSIZE="8MB"
+
+# Partition table — 8MB layout with larger app partitions
+CONFIG_PARTITION_TABLE_CUSTOM=y
+CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="partitions-8mb.csv"
+
+# No PSRAM on Cardputer ADV
+# CONFIG_ESP32S3_SPIRAM_SUPPORT is not set
+# CONFIG_SPIRAM is not set
+
+# SPI bus for display (ST7789V2) — uses SPI2 (FSPI)
+# CS=GPIO7, DC=GPIO34, RST=GPIO33, SCLK=GPIO36, MOSI=GPIO35, BL=GPIO38
+# Pin config is handled in HAL, not sdkconfig
+
+# I2C bus for keyboard (TCA8418) + IMU (BMI270) + audio ctrl (ES8311)
+# SDA=GPIO13, SCL=GPIO15
+# Pin config is handled in HAL, not sdkconfig
+
+# GPIO tool safety — restrict to Grove port pins only
+# Cardputer ADV has most GPIOs committed to onboard peripherals
+CONFIG_ZCLAW_GPIO_ALLOWED_PINS="1,2"
+
+# Factory reset — no dedicated button on Cardputer ADV
+# Use keyboard combo (Fn+Ctrl+R) instead, handled in firmware
+# CONFIG_ZCLAW_FACTORY_RESET_PIN is not set
+CONFIG_ZCLAW_FACTORY_RESET_HOLD_MS=5000
+
+# ESP32-S3 has more RAM — can afford WPA3
+CONFIG_ESP_WIFI_ENABLE_WPA3_SAE=y
+
+# USB-CDC for serial monitor (Cardputer ADV uses USB-C, no external UART chip)
+CONFIG_ESP_CONSOLE_USB_SERIAL_JTAG=y
