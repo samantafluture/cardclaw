@@ -1,0 +1,132 @@
+/*
+ * Built-in tool registry.
+ *
+ * Add a new firmware tool in three steps:
+ * 1) Implement the handler in main/tools_*.c with tool_execute_fn signature.
+ * 2) Declare the handler in main/tools_handlers.h.
+ * 3) Add one TOOL_ENTRY(...) line below.
+ */
+
+// GPIO
+TOOL_ENTRY("gpio_write",
+           "Set an allowed GPIO HIGH or LOW.",
+           "{\"type\":\"object\",\"properties\":{\"pin\":{\"type\":\"integer\"},\"state\":{\"type\":\"integer\"}},\"required\":[\"pin\",\"state\"]}",
+           tools_gpio_write_handler)
+TOOL_ENTRY("gpio_read",
+           "Read an allowed GPIO.",
+           "{\"type\":\"object\",\"properties\":{\"pin\":{\"type\":\"integer\"}},\"required\":[\"pin\"]}",
+           tools_gpio_read_handler)
+TOOL_ENTRY("gpio_read_all",
+           "Read all allowed GPIO states.",
+           "{\"type\":\"object\",\"properties\":{}}",
+           tools_gpio_read_all_handler)
+TOOL_ENTRY("delay",
+           "Wait in milliseconds.",
+           "{\"type\":\"object\",\"properties\":{\"milliseconds\":{\"type\":\"integer\"}},\"required\":[\"milliseconds\"]}",
+           tools_delay_handler)
+TOOL_ENTRY("i2c_scan",
+           "Scan an I2C bus for devices.",
+           "{\"type\":\"object\",\"properties\":{\"sda_pin\":{\"type\":\"integer\"},\"scl_pin\":{\"type\":\"integer\"},\"frequency_hz\":{\"type\":\"integer\"}},\"required\":[\"sda_pin\",\"scl_pin\"]}",
+           tools_i2c_scan_handler)
+TOOL_ENTRY("i2c_write",
+           "Write hex bytes to an I2C address.",
+           "{\"type\":\"object\",\"properties\":{\"sda_pin\":{\"type\":\"integer\"},\"scl_pin\":{\"type\":\"integer\"},\"address\":{\"type\":\"integer\"},\"data_hex\":{\"type\":\"string\"},\"frequency_hz\":{\"type\":\"integer\"}},\"required\":[\"sda_pin\",\"scl_pin\",\"address\",\"data_hex\"]}",
+           tools_i2c_write_handler)
+TOOL_ENTRY("i2c_read",
+           "Read bytes from an I2C address.",
+           "{\"type\":\"object\",\"properties\":{\"sda_pin\":{\"type\":\"integer\"},\"scl_pin\":{\"type\":\"integer\"},\"address\":{\"type\":\"integer\"},\"read_length\":{\"type\":\"integer\"},\"frequency_hz\":{\"type\":\"integer\"}},\"required\":[\"sda_pin\",\"scl_pin\",\"address\",\"read_length\"]}",
+           tools_i2c_read_handler)
+TOOL_ENTRY("i2c_write_read",
+           "Write hex bytes, then read from the same I2C address.",
+           "{\"type\":\"object\",\"properties\":{\"sda_pin\":{\"type\":\"integer\"},\"scl_pin\":{\"type\":\"integer\"},\"address\":{\"type\":\"integer\"},\"write_hex\":{\"type\":\"string\"},\"read_length\":{\"type\":\"integer\"},\"frequency_hz\":{\"type\":\"integer\"}},\"required\":[\"sda_pin\",\"scl_pin\",\"address\",\"write_hex\",\"read_length\"]}",
+           tools_i2c_write_read_handler)
+TOOL_ENTRY("dht_read",
+           "Read a DHT11 or DHT22 sensor.",
+           "{\"type\":\"object\",\"properties\":{\"pin\":{\"type\":\"integer\"},\"model\":{\"type\":\"string\",\"enum\":[\"dht11\",\"dht22\"]},\"retries\":{\"type\":\"integer\"}},\"required\":[\"pin\",\"model\"]}",
+           tools_dht_read_handler)
+
+// Memory
+TOOL_ENTRY("memory_set",
+           "Store a user memory value.",
+           "{\"type\":\"object\",\"properties\":{\"key\":{\"type\":\"string\"},\"value\":{\"type\":\"string\"}},\"required\":[\"key\",\"value\"]}",
+           tools_memory_set_handler)
+TOOL_ENTRY("memory_get",
+           "Read a user memory value.",
+           "{\"type\":\"object\",\"properties\":{\"key\":{\"type\":\"string\"}},\"required\":[\"key\"]}",
+           tools_memory_get_handler)
+TOOL_ENTRY("memory_list",
+           "List user memory keys.",
+           "{\"type\":\"object\",\"properties\":{}}",
+           tools_memory_list_handler)
+TOOL_ENTRY("memory_delete",
+           "Delete a user memory key.",
+           "{\"type\":\"object\",\"properties\":{\"key\":{\"type\":\"string\"}},\"required\":[\"key\"]}",
+           tools_memory_delete_handler)
+TOOL_ENTRY("set_persona",
+           "Set the assistant persona when the user explicitly asks.",
+           "{\"type\":\"object\",\"properties\":{\"persona\":{\"type\":\"string\",\"enum\":[\"neutral\",\"friendly\",\"technical\",\"witty\"]}},\"required\":[\"persona\"]}",
+           tools_set_persona_handler)
+TOOL_ENTRY("get_persona",
+           "Get the current assistant persona.",
+           "{\"type\":\"object\",\"properties\":{}}",
+           tools_get_persona_handler)
+TOOL_ENTRY("reset_persona",
+           "Reset the assistant persona to neutral.",
+           "{\"type\":\"object\",\"properties\":{}}",
+           tools_reset_persona_handler)
+
+// Cron/Scheduler
+TOOL_ENTRY("cron_set",
+           "Create a scheduled task.",
+           "{\"type\":\"object\",\"properties\":{\"type\":{\"type\":\"string\",\"enum\":[\"periodic\",\"daily\",\"once\"]},\"interval_minutes\":{\"type\":\"integer\"},\"delay_minutes\":{\"type\":\"integer\"},\"hour\":{\"type\":\"integer\"},\"minute\":{\"type\":\"integer\"},\"action\":{\"type\":\"string\"}},\"required\":[\"type\",\"action\"]}",
+           tools_cron_set_handler)
+TOOL_ENTRY("cron_list",
+           "List scheduled tasks.",
+           "{\"type\":\"object\",\"properties\":{}}",
+           tools_cron_list_handler)
+TOOL_ENTRY("cron_delete",
+           "Delete a scheduled task.",
+           "{\"type\":\"object\",\"properties\":{\"id\":{\"type\":\"integer\"}},\"required\":[\"id\"]}",
+           tools_cron_delete_handler)
+TOOL_ENTRY("get_time",
+           "Get local device time.",
+           "{\"type\":\"object\",\"properties\":{}}",
+           tools_get_time_handler)
+TOOL_ENTRY("set_timezone",
+           "Set the device timezone.",
+           "{\"type\":\"object\",\"properties\":{\"timezone\":{\"type\":\"string\"}},\"required\":[\"timezone\"]}",
+           tools_set_timezone_handler)
+TOOL_ENTRY("get_timezone",
+           "Get the device timezone.",
+           "{\"type\":\"object\",\"properties\":{}}",
+           tools_get_timezone_handler)
+
+// System
+TOOL_ENTRY("get_version",
+           "Get firmware version.",
+           "{\"type\":\"object\",\"properties\":{}}",
+           tools_get_version_handler)
+
+// Health
+TOOL_ENTRY("get_health",
+           "Get device health.",
+           "{\"type\":\"object\",\"properties\":{}}",
+           tools_get_health_handler)
+TOOL_ENTRY("get_diagnostics",
+           "Get runtime diagnostics.",
+           "{\"type\":\"object\",\"properties\":{\"scope\":{\"type\":\"string\",\"enum\":[\"quick\",\"runtime\",\"memory\",\"rates\",\"time\",\"all\"]},\"verbose\":{\"type\":\"boolean\"}}}",
+           tools_get_diagnostics_handler)
+
+// User Tool Management
+TOOL_ENTRY("create_tool",
+           "Create a user tool.",
+           "{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\"},\"description\":{\"type\":\"string\"},\"action\":{\"type\":\"string\"}},\"required\":[\"name\",\"description\",\"action\"]}",
+           tools_create_tool_handler)
+TOOL_ENTRY("list_user_tools",
+           "List user-created tools.",
+           "{\"type\":\"object\",\"properties\":{}}",
+           tools_list_user_tools_handler)
+TOOL_ENTRY("delete_user_tool",
+           "Delete a user-created tool.",
+           "{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\"}},\"required\":[\"name\"]}",
+           tools_delete_user_tool_handler)

@@ -1,0 +1,34 @@
+name: Firmware Stack Guard
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  stack-guard:
+    runs-on: ubuntu-latest
+    container:
+      image: espressif/idf:v5.4
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install jq
+        run: |
+          apt-get update
+          apt-get install -y jq
+
+      - name: Build firmware
+        run: |
+          . "$IDF_PATH/export.sh"
+          idf.py build
+
+      - name: Guard cron stack usage
+        run: ./scripts/check-stack-usage.sh --build-dir build --source-suffix /main/cron.c --function check_entries --max-bytes 1024
+
+      - name: Guard Telegram poll stack usage
+        # telegram_poll currently allocates ~5.2 KiB with IDF v5.4 flags.
+        run: ./scripts/check-stack-usage.sh --build-dir build --source-suffix /main/telegram.c --function telegram_poll --max-bytes 6144
+
+      - name: Guard Telegram send task stack usage
+        run: ./scripts/check-stack-usage.sh --build-dir build --source-suffix /main/telegram.c --function telegram_send_task --max-bytes 2048

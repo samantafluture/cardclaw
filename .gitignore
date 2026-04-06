@@ -1,19 +1,53 @@
 # Private Claude context
 .claude/private/
 
-# ESP-IDF build
+# Build output
 build/
+build-qemu/
+build-secure/
+/build-*/
+/build.*/
 sdkconfig
+sdkconfig.qemu
 sdkconfig.old
+/sdkconfig.*
+!/sdkconfig.defaults
+!/sdkconfig.qemu.defaults
+!/sdkconfig.*.defaults
+!/sdkconfig.secure
+!/sdkconfig.test
 
-# Secrets
-**/cardclaw_secrets.h
+# Flash encryption keys (NEVER commit these!)
+keys/
 
 # IDE
 .vscode/
 .idea/
+*.code-workspace
 
 # OS
 .DS_Store
 Thumbs.db
 *:Zone.Identifier
+
+# Test artifacts
+test/host/build/
+
+# Secrets (never commit these)
+*.pem
+*.key
+secrets.h
+**/cardclaw_secrets.h
+
+# ESP-IDF managed components
+managed_components/
+
+# Python
+__pycache__
+*.py[cod]
+.env
+
+# Editor backup files
+*~
+*.swp
+*.swo

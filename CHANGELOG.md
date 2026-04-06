@@ -1,0 +1,377 @@
+# Changelog
+
+All notable changes to this project are documented in this file.
+
+The format is based on Keep a Changelog and this project follows Semantic Versioning.
+
+## [Unreleased]
+
+- No unreleased changes yet.
+
+## [2.13.0] - 2026-03-22
+
+### Added
+- Added `dht_read` for direct `DHT11` and `DHT22` temperature/humidity reads from a single GPIO pin.
+- Added generic raw I2C bus tools: `i2c_scan`, `i2c_write`, `i2c_read`, and `i2c_write_read`.
+
+### Fixed
+- Trimmed outbound TLS feature usage to recover firmware headroom and keep the classic ESP32 build comfortably under the `888 KiB` binary budget.
+- Hardened built-in tool schema generation so zero-argument tools emit explicit empty object properties accepted by the current OpenAI-compatible tool schema validators.
+- Fixed the host benchmark `--append-counter` path so warmup and measured requests use a monotonic suffix and no longer trip repeated-prompt suppression during serial soaks.
+
+### Docs
+- Updated README and docs-site references for the new DHT and generic I2C tool surface, including guidance on when to use DHT versus raw I2C transactions.
+
+### Tests
+- Added host coverage for DHT decoding/handler behavior, generic I2C policy and transaction paths, zero-argument built-in tool schemas, and benchmark counter sequencing across warmup and measured runs.
+
+## [2.12.1] - 2026-03-18
+
+### Fixed
+- Added a first-class `esp32-t-relay` board preset across build, flash, and secure-flash flows so LilyGO TTGO T-Relay users can target the board's relay GPIOs (`5`, `18`, `19`, `21`) without getting stuck behind the generic `GPIO 2-10` starter policy.
+- Aligned ESP-IDF app metadata/version reporting with the checked-in `VERSION` file so firmware builds now advertise `2.12.1` instead of falling back to `git describe`.
+
+### Docs
+- Clarified that stock classic `esp32` builds keep a deliberately conservative GPIO starter range and, with flash-pin blocking applied, effectively expose only `GPIO 2-5` until the GPIO policy is changed or a board preset is used.
+- Documented the new `--t-relay` preset in the getting-started and full-reference docs.
+
+### Tests
+- Added host coverage for the new T-Relay preset path in build/flash scripts, including target-mismatch rejection behavior.
+
+## [2.12.0] - 2026-03-09
+
+### Added
+- Added a USB-local admin console with `/gpio`, `/diag`, `/wifi status`, `/wifi scan`, `/bootcount`, `/reboot`, and guarded `/factory-reset confirm` commands for recovery, safe mode, and pre-network bring-up.
+
+### Changed
+- Routed local admin commands ahead of the LLM path and restricted them to USB-local callers instead of allowing Telegram or web relay traffic to invoke them.
+- Shared factory-reset behavior across the physical reset-button path and the new local admin console command path.
+
+### Docs
+- Added a dedicated Local Admin Console chapter to the docs site and updated README/getting-started/tool-reference docs for the new recovery/admin workflow.
+
+### Tests
+- Added host coverage for local admin command dispatch, local-only rejection for remote callers, and reboot/factory-reset command behavior.
+
+## [2.11.2] - 2026-03-07
+
+### Changed
+- Split command parsing and persona/system-prompt helpers out of `main/agent.c` into focused helper modules.
+- Split Telegram target-routing and HTTP diagnostics helpers out of `main/telegram.c` to keep the runtime logic smaller and easier to maintain.
+
+### Tests
+- Added direct host coverage for the extracted Telegram HTTP diagnostics helpers.
+
+## [2.11.1] - 2026-03-07
+
+### Fixed
+- Serialized Telegram and LLM HTTPS usage on classic `esp32` targets to reduce TLS/memory contention that could cause OpenAI-backed turns to fail before or between tool rounds.
+- Agent turns now pause new Telegram long-polls while an LLM/tool exchange is active, preventing `getUpdates` from preempting follow-up model requests mid-turn.
+
+### Docs
+- Updated README and docs-site support matrix copy to explicitly list classic `ESP32`, `ESP32-WROOM`, and `ESP32 DevKit` support.
+
+### Tests
+- Added host coverage for Telegram poll pause/resume behavior around successful and failed LLM turns.
+- Added host coverage for classic ESP32 Telegram poll-timeout selection.
+
+## [2.11.0] - 2026-03-07
+
+### Fixed
+- On classic `esp32` targets, boot now skips factory-reset button setup when the configured pin is unsafe for runtime input use, preventing startup crashes on boards that still map the reset button default onto flash-reserved pins such as `GPIO9`.
+
+### Changed
+- `provision.sh` now offers curated backend-specific model menus for interactive provisioning, so common OpenAI, Anthropic, OpenRouter, and Ollama choices no longer require typing exact model IDs.
+- Updated default backend models to `gpt-5.4` (OpenAI), `claude-sonnet-4-6` (Anthropic), and `openrouter/auto` (OpenRouter).
+- Updated local provisioning profile templates and runtime/test defaults to match the new model selections.
+
+### Docs
+- Updated Getting Started and full reference docs for the curated provisioning flow and refreshed default model guidance.
+
+### Tests
+- Added host coverage for interactive provisioning model-menu paths, including default, curated, custom, and Ollama endpoint-normalization flows.
+- Added host coverage for the classic ESP32 runtime factory-reset pin safety guard.
+
+## [2.10.3] - 2026-03-05
+
+### Fixed
+- Unified GPIO pin safety policy across GPIO and I2C scan tools so both paths enforce the same allowed-pin checks.
+- `i2c_scan` now blocks classic ESP32 flash/PSRAM pins (`GPIO6-11`) via the shared policy layer.
+
+### Changed
+- Extracted reusable pin-policy logic into `main/gpio_policy.c`/`main/gpio_policy.h`.
+
+### Tests
+- Added host I2C policy coverage and mock I2C driver wiring (`test_tools_i2c_policy.c`, `mock_i2c.c`) and included the suite in `./scripts/test.sh host`.
+
+## [2.10.2] - 2026-03-04
+
+### Fixed
+- OpenAI-compatible API harness calls now auto-insert `SYSTEM_PROMPT` as a leading `system` message when none is present, aligning OpenRouter/OpenAI behavior with Anthropic's explicit system-prompt wiring.
+
+### Tests
+- Added host payload-composition coverage for `call_api` to verify system-message insertion when missing and no duplication when a custom leading system message already exists.
+
+## [2.10.1] - 2026-03-03
+
+### Fixed
+- Hardened `llm_request` argument validation to fail fast on invalid/null request and response buffer inputs.
+- Rate-limit persistence now records/logs NVS write failures instead of silently ignoring failed writes.
+- Boot-count persistence parsing now uses strict numeric parsing with safe fallback on invalid/negative/overflow values.
+
+### Tests
+- Added host runtime coverage for `llm_request` invalid-argument handling.
+- Added host runtime coverage for rate-limit persistence failure accounting and retry persistence behavior.
+- Added host runtime coverage for boot-guard fallback behavior with invalid persisted boot-count values.
+- Updated host ratelimit runtime test compile flags for Linux CI portability (`localtime_r` declaration via POSIX feature macro).
+
+## [2.10.0] - 2026-03-03
+
+### Added
+- Added a centralized built-in tool registry via `main/builtin_tools.def`, making built-in tool declarations single-source and easier to extend.
+
+### Changed
+- Refactored tool registration and initialization paths to consume the shared built-in registry definition list, reducing duplication across tool schema and dispatch wiring.
+
+### Docs
+- Documented two custom-tool approaches across web docs and reference docs: prompt-defined GPIO workflows (Approach A) and hosted HTTP-backed programs for more complex tools (Approach B).
+- Added troubleshooting guidance that breadboards can interfere with ESP Wi-Fi links and included practical mitigation recommendations.
+- Added a short Approach B pointer in `README.md`.
+
+### Tests
+- Added host coverage for built-in tool registry integrity and wired it into `./scripts/test.sh host`.
+
+## [2.9.1] - 2026-03-02
+
+### Fixed
+- Hardened the `boot_ok` stabilization path by moving boot-counter persistence into shared boot-guard helpers and raising `BOOT_OK_TASK_STACK_SIZE` to reduce stack-pressure risk during startup finalization.
+- Fixed diagnostics verbose uptime formatting to avoid the 64-bit `printf` crash path on-device.
+
+### Tests
+- Added host coverage for boot-guard persistence behavior and `boot_ok` stack-size configuration.
+- Added host diagnostics tests covering verbose uptime formatting output.
+
+## [2.9.0] - 2026-03-01
+
+### Fixed
+- Linux installer dependency steps no longer hard-code `apt`; `install.sh` now detects and uses `apt-get`, `pacman`, `dnf`, or `zypper`.
+
+### Changed
+- Non-interactive installer prompts now default to `no` unless `-y`, explicit flags, or saved defaults are provided.
+- Linux optional dependency installs (`QEMU`, `cJSON`) now use distro-specific package names per detected package manager.
+
+### Docs
+- Updated README, full reference README, and Getting Started docs with Linux package-manager detection and non-interactive prompt behavior.
+
+### Tests
+- Added host install-script coverage for Linux package-manager detection (`pacman`) and unsupported-manager fallback behavior.
+
+## [2.8.2] - 2026-03-01
+
+### Fixed
+- GPIO reads now preserve driven output state instead of clobbering pin configuration before sampling.
+- `gpio_read_all` no longer clears previously written pin levels when collecting multi-pin status.
+
+### Changed
+- `gpio_write` now configures pins as `GPIO_MODE_INPUT_OUTPUT` for reliable readback semantics.
+- Read paths use `gpio_input_enable` instead of reset/reconfigure so active output drive is retained.
+
+### Tests
+- Added host regressions for `write -> read`, `read_all` preserving output state, and `HIGH -> LOW -> read` roundtrip behavior.
+- Improved host GPIO driver stub to model input-buffer semantics and pin state transitions.
+
+## [2.8.1] - 2026-03-01
+
+### Added
+- Added scoped runtime diagnostics via the `get_diagnostics` tool and local `/diag` command support for fast on-device checks.
+
+### Fixed
+- On classic `esp32` targets, GPIO tool operations now block flash/PSRAM-reserved pins (`GPIO6-11`) to avoid crashes on WROOM/VROOM-class boards.
+
+### Changed
+- Hardened GPIO read/write paths with stricter pin validation and clearer errors when pin configuration/read operations fail.
+
+### Docs
+- Updated README/docs references for runtime diagnostics usage and ESP32 GPIO flash-pin guardrails.
+
+### Tests
+- Added host coverage for runtime diagnostics command handling and ESP32 flash-pin exclusion behavior in GPIO policy tests.
+
+## [2.8.0] - 2026-02-28
+
+### Fixed
+- Set the default runtime UART channel to `uart0` for classic ESP32/WROOM workflows to avoid channel mismatches.
+- Hardened flash/install guardrails by adding connected-chip detection and target-mismatch checks before flashing.
+
+### Changed
+- Build/flash/monitor/erase/provision scripts now include improved serial-port handling and safer board-target defaults during install flows.
+- Added factory-reset pin/hold Kconfig options consumed by runtime defaults.
+
+### Docs
+- Updated Getting Started and full reference docs for the safer install/flash flow and new serial troubleshooting guidance.
+
+### Tests
+- Added host coverage for install/provision script argument handling and flash target-guard behavior.
+
+## [2.7.1] - 2026-02-23
+
+### Fixed
+- Added board-preset support for `esp32s3-box-3` across `scripts/build.sh`, `scripts/flash.sh`, and `scripts/flash-secure.sh`, including `--box-3` aliases and the required `IDF_TARGET`/`SDKCONFIG_DEFAULTS` overrides.
+- Flash flows now fail fast when `--board esp32s3-box-3` is used against non-ESP32-S3 hardware.
+
+### Changed
+- Factory-reset pin/hold settings are now configurable via Kconfig (`CONFIG_ZCLAW_FACTORY_RESET_PIN`, `CONFIG_ZCLAW_FACTORY_RESET_HOLD_MS`) and consumed by runtime defaults.
+- Added `sdkconfig.esp32s3-box-3.defaults` with BOX-3-safe GPIO allowlist and factory-reset button mapping.
+
+### Docs
+- Added Getting Started and reference notes for using BOX-3 preset flags in build/flash flows.
+
+### Tests
+- Added host tests for board-preset argument plumbing and target-mismatch rejection paths.
+- Added `esp32s3-box-3` coverage to the firmware target matrix workflow.
+
+## [2.7.0] - 2026-02-23
+
+### Added
+- Added first-class Ollama backend support with OpenAI-compatible request/response handling and runtime endpoint override via `llm_api_url`.
+- Provisioning now supports custom API endpoint input via `--api-url` (`provision.sh` and `provision-dev.sh`) and persists endpoint overrides into NVS.
+- Added host coverage for Ollama backend init/defaults, custom API URL override behavior, and provisioning flows around `--backend ollama`/`--api-url`.
+
+### Changed
+- Ollama is now included in backend choices across runtime provisioning/docs, with default model set to `qwen3:8b`.
+- API key is optional for Ollama (while remaining required for Anthropic/OpenAI/OpenRouter).
+- Provisioning API checks for OpenAI/OpenRouter now normalize chat-completions override URLs to `/models`, so valid runtime chat endpoints no longer cause false verification failures.
+
+### Fixed
+- Cleared LLM API key runtime state on `llm_init()` re-init before NVS load to prevent stale in-memory keys from carrying across backend/key changes.
+
+### Docs
+- Updated README + docs-site guidance for Ollama provisioning, including LAN-reachable endpoint requirement (`--api-url`) and backend support lists.
+
+### Tests
+- Added host tests ensuring OpenAI/OpenRouter API-check URL normalization and LLM re-init key-state clearing.
+
+## [2.6.1] - 2026-02-23
+
+### Changed
+- Telegram polling now uses backend-specific timeout policy: OpenRouter uses a shorter poll timeout to reduce TLS memory-pressure overlap on constrained targets, while Anthropic/OpenAI behavior remains unchanged.
+
+### Tests
+- Added host unit tests for Telegram poll-timeout policy to ensure the OpenRouter override stays scoped and other backends keep the default timeout.
+
+## [2.6.0] - 2026-02-23
+
+### Added
+- Telegram chat allowlist support (`tg_chat_ids`) for up to four authorized chat IDs, with per-chat reply routing for inbound Telegram messages.
+- Host coverage for Telegram allowlist parsing and outbound target resolution behavior.
+
+### Changed
+- Provisioning now accepts comma-separated Telegram chat IDs (`--tg-chat-id` / `--tg-chat-ids`) and writes both `tg_chat_ids` and the backward-compatible primary `tg_chat_id`.
+- Telegram outbound target routing now fails closed when a requested chat ID is unauthorized.
+- Fixed debounce replay log milliseconds formatting in agent suppression logs.
+
+### Docs
+- Updated Telegram chat allowlist guidance across README and docs-site getting started/security/local-dev references.
+
+## [2.5.3] - 2026-02-22
+
+### Added
+- Host coverage for byte-accurate WiFi credential validation paths and `llm.c` runtime initialization/request behavior in stub mode.
+
+### Changed
+- Provisioning now validates WiFi SSID/password by byte length (`32`/`63`) to match on-device limits and behavior.
+- WiFi credential copy/validation logic is centralized in shared firmware helpers used by startup connection flow.
+- Web relay `/api/chat` now requires JSON `Content-Type` and uses canonical origin matching across request and CORS handling.
+
+## [2.5.2] - 2026-02-22
+
+### Changed
+- `/start` and `/help` onboarding examples now lead with natural-language usage and include scheduling/tool-creation examples.
+- Getting Started now places Telegram setup ahead of first-chat examples and clarifies both non-interactive flags and interactive prompt entry for Telegram credentials.
+- Added a short user/agent example flow in Getting Started for creating a tool and scheduling it by natural language.
+
+## [2.5.1] - 2026-02-22
+
+### Changed
+- Capability-priority guidance in the system prompt now emphasizes custom tools, schedules, memory, and GPIO ahead of optional I2C details when users ask what zclaw can do.
+
+## [2.5.0] - 2026-02-22
+
+### Added
+- Added `gpio_read_all`, a bulk GPIO state tool that reads all tool-allowed pins in one call.
+
+### Changed
+- Agent help text now includes `gpio read all`.
+- System prompt now instructs the model to prefer `gpio_read_all` for all/multi-pin state requests.
+- Increased composed system-prompt buffer size to avoid overflow fallback in host/device runs.
+
+### Docs
+- Updated `docs-site/tools.html` and `docs-site/reference/README_COMPLETE.md` with `gpio_read_all`.
+- Updated top-level `README.md` highlights to mention bulk GPIO reads.
+
+### Tests
+- Added host tests for `gpio_read_all` output over the configured range and input-schema tolerance.
+
+## [2.4.3] - 2026-02-22
+
+### Changed
+- Web relay defaults to `127.0.0.1` and now requires `ZCLAW_WEB_API_KEY` when binding to non-loopback hosts.
+- Web relay CORS no longer uses wildcard behavior; optional exact-origin access is available via `--cors-origin` or `ZCLAW_WEB_CORS_ORIGIN`.
+- Encrypted-boot startup now fails closed when encrypted NVS initialization fails, with an explicit dev-only override via `CONFIG_ZCLAW_ALLOW_UNENCRYPTED_NVS_FALLBACK`.
+
+### Docs
+- Updated relay setup docs and examples in `docs-site/getting-started.html`.
+- Updated full reference README with relay CORS and encrypted-NVS startup notes in `docs-site/reference/README_COMPLETE.md`.
+
+### Tests
+- Added host tests covering origin normalization, loopback host detection, and non-loopback bind validation in `test/host/test_web_relay.py`.
+
+## [2.4.2] - 2026-02-22
+
+### Added
+- docs-site `use-cases.html` chapter focused on practical and playful on-device assistant scenarios.
+- docs-site `changelog.html` page for release notes on the website.
+- top-level README links to the web changelog and repository changelog.
+- Host regression test covering cron-triggered `cron_set` blocking behavior.
+
+### Changed
+- Agent system prompt now injects runtime device target and configured GPIO tool policy to reduce generic ESP32 pin-answer hallucinations.
+- Cron-triggered turns now block `cron_set` calls so scheduled actions execute directly instead of self-rescheduling.
+- Field Guide docs pages now use page-specific titles/social metadata.
+- Use-cases chapter now describes observed runtime heap headroom instead of a generic 400KB runtime claim.
+
+## [2.4.1] - 2026-02-22
+
+### Added
+- Built-in persona tools: `set_persona`, `get_persona`, `reset_persona`, with persistent storage.
+- Host tests for persona changes through LLM tool-calling.
+
+### Changed
+- Persona/tone changes now route through normal LLM tool-calling flow instead of local parser shortcuts.
+- Runtime persona prompt/context sync improved after persona tool calls.
+- System prompt clarified on-device execution, plain-text output requirement, and persistent persona behavior.
+- README setup notes moved into a collapsible section.
+
+## [2.4.0] - 2026-02-22
+
+### Changed
+- Cron/scheduling responsiveness tightened (10-second check interval).
+- Telegram output format shifted toward plain text defaults.
+- Release defaults tuned for reliability and response quality.
+
+## [2.3.1] - 2026-02-22
+
+### Added
+- Expanded network diagnostics/telemetry for LLM and Telegram transport behavior.
+
+### Changed
+- Rate limits increased for better real-world usability.
+- Boot/task stability thresholds adjusted (including stack guard and boot-loop thresholds).
+
+## [2.3.0] - 2026-02-22
+
+### Added
+- Telegram backlog clear helper script for local/dev operations.
+
+### Changed
+- Telegram polling hardened (stale/duplicate update handling, runtime state handling, UX reliability).

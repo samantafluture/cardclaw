@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="zclaw Field Guide: USB-local admin commands for recovery, safe mode, and pre-network bring-up.">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="zclaw - Field Guide">
+    <meta property="og:title" content="zclaw - Field Guide | Local Admin Console">
+    <meta property="og:description" content="USB-local admin commands for recovery, safe mode, and pre-network bring-up.">
+    <meta property="og:image" content="https://zclaw.dev/images/lobster_xiao_cropped_left.png">
+    <meta property="og:image:alt" content="Lobster soldering a Seeed Studio XIAO ESP32-C3">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="zclaw - Field Guide | Local Admin Console">
+    <meta name="twitter:description" content="USB-local admin commands for recovery, safe mode, and pre-network bring-up.">
+    <meta name="twitter:image" content="https://zclaw.dev/images/lobster_xiao_cropped_left.png">
+    <title>zclaw - Field Guide | Local Admin Console</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <div class="page">
+      <aside class="sidebar">
+        <div class="brand">
+          <h1>zclaw</h1>
+          <p>Field Guide</p>
+        </div>
+        <div class="divider"></div>
+        <ul class="chapter-list">
+          <li><a href="index.html">Chapter 0 · Overview</a></li>
+          <li><a href="getting-started.html">Chapter 1 · Getting Started</a></li>
+          <li><a href="tools.html">Chapter 2 · Tool Surface</a></li>
+          <li><a href="architecture.html">Chapter 3 · Runtime Anatomy</a></li>
+          <li><a href="security.html">Chapter 4 · Security &amp; Ops</a></li>
+          <li><a href="build-your-own-tool.html">Chapter 5 · Build Your Own Tool</a></li>
+          <li><a href="local-dev.html">Chapter 6 · Local Dev &amp; Hacking</a></li>
+          <li><a href="use-cases.html">Chapter 7 · Use Cases</a></li>
+          <li><a href="local-admin.html">Chapter 8 · Local Admin Console</a></li>
+          <li><a href="changelog.html">Chapter 9 · Changelog</a></li>
+        </ul>
+      </aside>
+
+      <main class="content-wrap">
+        <div class="topbar">
+          <p class="kicker">zclaw docs</p>
+          <div class="topbar-actions">
+            <button class="menu-toggle" type="button" aria-label="Open chapter menu">☰</button>
+          </div>
+        </div>
+
+        <header>
+          <p class="kicker">chapter 8</p>
+          <h1 class="page-title">Local Admin Console</h1>
+          <p class="deck">USB-local recovery commands for when Wi-Fi is broken, the board is unprovisioned, or the LLM path is unavailable.</p>
+        </header>
+
+        <section class="section">
+          <h2>Why This Exists</h2>
+          <p>The local admin console is the board's non-LLM control plane. It keeps zclaw operable when chat automation is the wrong tool for the job: first boot, provisioning mistakes, weak Wi-Fi, safe mode, or general field recovery.</p>
+          <ul>
+            <li>It runs over the USB serial console.</li>
+            <li>It does not require a Wi-Fi connection.</li>
+            <li>It does not require an LLM round trip.</li>
+            <li>It stays available in safe mode and before normal network startup.</li>
+          </ul>
+        </section>
+
+        <section class="section">
+          <h2>How To Use It</h2>
+          <p>Connect the board over USB and open the serial console:</p>
+          <pre><code>./scripts/monitor.sh /dev/cu.usbmodem1101</code></pre>
+          <p>Then type commands directly into the console:</p>
+          <pre><code>/wifi status
+/wifi scan
+/bootcount
+/gpio all
+/diag all
+/reboot</code></pre>
+          <p class="inline-note">The serial benchmark helper also works well for scripted checks: <code>./scripts/benchmark.sh --mode serial --serial-port /dev/cu.usbmodem1101 --message "/wifi status"</code>.</p>
+        </section>
+
+        <section class="section">
+          <h2>Command Reference</h2>
+          <table>
+            <thead>
+              <tr><th>Command</th><th>Purpose</th><th>Notes</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>/gpio [all|pin|pin high|pin low]</code></td><td>Read or drive tool-allowed GPIO pins locally.</td><td>Respects the configured GPIO safety policy.</td></tr>
+              <tr><td><code>/diag [scope] [verbose]</code></td><td>Run local runtime diagnostics.</td><td>Scopes match <code>get_diagnostics</code>: <code>quick</code>, <code>runtime</code>, <code>memory</code>, <code>rates</code>, <code>time</code>, <code>all</code>.</td></tr>
+              <tr><td><code>/wifi status</code></td><td>Show provisioned SSID, driver/link state, IP, RSSI, and last disconnect reason.</td><td>Useful before and after scans, reprovisioning, or recovery boots.</td></tr>
+              <tr><td><code>/wifi scan</code></td><td>Scan visible Wi-Fi APs.</td><td>Lists RSSI, auth mode, channel, and frequency for the top visible networks.</td></tr>
+              <tr><td><code>/bootcount</code></td><td>Show persisted boot-failure count and safe-mode threshold state.</td><td>Helps explain why the board entered safe mode.</td></tr>
+              <tr><td><code>/reboot</code></td><td>Reboot the board immediately.</td><td>Replies once, then restarts.</td></tr>
+              <tr><td><code>/factory-reset</code></td><td>Show the destructive reset warning.</td><td>Non-destructive by itself.</td></tr>
+              <tr><td><code>/factory-reset confirm</code></td><td>Erase NVS and reboot.</td><td>Destructive: wipes Wi-Fi credentials, tokens, schedules, memory, and boot state.</td></tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section class="section">
+          <h2>Availability Rules</h2>
+          <ul>
+            <li>These commands are USB-local only.</li>
+            <li>Telegram and web relay callers are rejected instead of falling through to the model.</li>
+            <li><code>/stop</code> pauses chat intake, but it does not disable local admin commands.</li>
+            <li>Safe mode keeps this console available specifically so you can inspect and recover the device.</li>
+          </ul>
+        </section>
+
+        <section class="section">
+          <h2>Safe Mode Workflow</h2>
+          <p>A typical safe-mode session looks like this:</p>
+          <pre><code>/bootcount
+/wifi status
+/wifi scan
+/diag runtime verbose
+/gpio all</code></pre>
+          <p>This is the intended recovery path: inspect boot state, inspect Wi-Fi, inspect runtime health, and only then decide whether to reprovision, move the board, or factory-reset it.</p>
+        </section>
+
+        <section class="section">
+          <h2>Destructive Reset</h2>
+          <p><code>/factory-reset confirm</code> is intentionally explicit. It erases NVS and reboots the board.</p>
+          <ul>
+            <li>Wi-Fi credentials are removed.</li>
+            <li>LLM and Telegram credentials are removed.</li>
+            <li>Schedules and persistent memory are removed.</li>
+            <li>Boot-loop state is cleared because the stored boot counter is erased.</li>
+          </ul>
+          <p class="inline-note">Use this when the stored state itself is suspect. If you only need to restart the board, use <code>/reboot</code> instead.</p>
+        </section>
+
+        <footer class="footer">
+          <p>Use this chapter as the field-recovery reference. For the firmware execution boundary behind these commands, see <a href="tools.html">Chapter 2</a>.</p>
+        </footer>
+      </main>
+    </div>
+    <script src="app.js"></script>
+  </body>
+</html>

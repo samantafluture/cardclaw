@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="zclaw Field Guide: practical docs for the ESP32-resident AI assistant with GPIO, schedules, memory, and tool calling.">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="zclaw - Field Guide">
+    <meta property="og:title" content="zclaw - Field Guide | Changelog">
+    <meta property="og:description" content="Practical docs for the ESP32-resident AI assistant with GPIO, schedules, memory, and tool calling.">
+    <meta property="og:image" content="https://zclaw.dev/images/lobster_xiao_cropped_left.png">
+    <meta property="og:image:alt" content="Lobster soldering a Seeed Studio XIAO ESP32-C3">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="zclaw - Field Guide | Changelog">
+    <meta name="twitter:description" content="Practical docs for the ESP32-resident AI assistant with GPIO, schedules, memory, and tool calling.">
+    <meta name="twitter:image" content="https://zclaw.dev/images/lobster_xiao_cropped_left.png">
+    <title>zclaw - Field Guide | Changelog</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <div class="page">
+      <aside class="sidebar">
+        <div class="brand">
+          <h1>zclaw</h1>
+          <p>Field Guide</p>
+        </div>
+        <div class="divider"></div>
+        <ul class="chapter-list">
+          <li><a href="index.html">Chapter 0 · Overview</a></li>
+          <li><a href="getting-started.html">Chapter 1 · Getting Started</a></li>
+          <li><a href="tools.html">Chapter 2 · Tool Surface</a></li>
+          <li><a href="architecture.html">Chapter 3 · Runtime Anatomy</a></li>
+          <li><a href="security.html">Chapter 4 · Security &amp; Ops</a></li>
+          <li><a href="build-your-own-tool.html">Chapter 5 · Build Your Own Tool</a></li>
+          <li><a href="local-dev.html">Chapter 6 · Local Dev &amp; Hacking</a></li>
+          <li><a href="use-cases.html">Chapter 7 · Use Cases</a></li>
+          <li><a href="local-admin.html">Chapter 8 · Local Admin Console</a></li>
+          <li><a href="changelog.html">Chapter 9 · Changelog</a></li>
+        </ul>
+      </aside>
+
+      <main class="content-wrap">
+        <div class="topbar">
+          <p class="kicker">zclaw docs</p>
+          <div class="topbar-actions">
+            <button class="menu-toggle" type="button" aria-label="Open chapter menu">☰</button>
+          </div>
+        </div>
+
+        <header>
+          <p class="kicker">chapter 9</p>
+          <h1 class="page-title">Changelog</h1>
+          <p class="deck">Release notes for zclaw firmware and docs. For full detail and source control context, use the repository changelog.</p>
+        </header>
+
+        <section class="section">
+          <h2>Current Stream</h2>
+          <p><strong>Unreleased</strong></p>
+          <ul>
+            <li>No unreleased changes yet.</li>
+          </ul>
+          <p class="inline-note">Source of truth: <a href="https://github.com/tnm/zclaw/blob/main/CHANGELOG.md">CHANGELOG.md in repo</a>.</p>
+        </section>
+
+        <section class="section">
+          <h2>Recent Releases</h2>
+          <table>
+            <thead>
+              <tr><th>Version</th><th>Date</th><th>Highlights</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>2.13.0</code></td>
+                <td>2026-03-22</td>
+                <td>Minor release: added first-class <code>dht_read</code> support for <code>DHT11</code>/<code>DHT22</code>, added generic raw I2C tools (<code>i2c_scan</code>, <code>i2c_write</code>, <code>i2c_read</code>, <code>i2c_write_read</code>), trimmed TLS features to preserve binary headroom under the <code>888 KiB</code> budget, hardened zero-argument tool schemas for OpenAI-compatible validators, and fixed benchmark counter sequencing for reliable serial soaks.</td>
+              </tr>
+              <tr>
+                <td><code>2.12.1</code></td>
+                <td>2026-03-18</td>
+                <td>Bugfix release: added a first-class <code>esp32-t-relay</code> board preset across build/flash flows for LilyGO TTGO T-Relay boards, aligned firmware app-version metadata with the checked-in release version, clarified the conservative default GPIO policy on classic <code>esp32</code> builds, and added host coverage for the new preset plus target-mismatch guardrails.</td>
+              </tr>
+              <tr>
+                <td><code>2.12.0</code></td>
+                <td>2026-03-09</td>
+                <td>Minor release: added a USB-local admin console for <code>/gpio</code>, <code>/diag</code>, <code>/wifi</code>, <code>/bootcount</code>, <code>/reboot</code>, and guarded <code>/factory-reset</code> recovery commands, kept them available in safe mode and before network bring-up, and documented the workflow across README and the docs site.</td>
+              </tr>
+              <tr>
+                <td><code>2.11.2</code></td>
+                <td>2026-03-07</td>
+                <td>Patch release: split agent command/persona helpers and Telegram target/HTTP diagnostics helpers into smaller internal modules, and added direct host coverage for the extracted Telegram HTTP diagnostics path.</td>
+              </tr>
+              <tr>
+                <td><code>2.11.1</code></td>
+                <td>2026-03-07</td>
+                <td>Bugfix release: serialized Telegram and LLM HTTPS on classic <code>esp32</code> targets so OpenAI-backed tool turns no longer get knocked over by TLS/memory contention, added host coverage for poll pause/resume and classic-ESP32 poll policy, and updated docs to explicitly list classic ESP32/WROOM/DevKit support.</td>
+              </tr>
+              <tr>
+                <td><code>2.11.0</code></td>
+                <td>2026-03-07</td>
+                <td>Minor release: provisioning now uses curated backend-specific model menus with refreshed defaults (<code>gpt-5.4</code>, <code>claude-sonnet-4-6</code>, <code>openrouter/auto</code>), and classic <code>esp32</code> boot now skips unsafe factory-reset flash pins to avoid startup crashes.</td>
+              </tr>
+              <tr>
+                <td><code>2.10.3</code></td>
+                <td>2026-03-05</td>
+                <td>Bugfix release: centralized GPIO pin safety policy so <code>i2c_scan</code> and GPIO tools enforce the same allowlist/range rules, including classic ESP32 flash-pin blocking (<code>GPIO6-11</code>), with new host I2C policy coverage.</td>
+              </tr>
+              <tr>
+                <td><code>2.10.2</code></td>
+                <td>2026-03-04</td>
+                <td>Bugfix release: OpenAI/OpenRouter harness calls now prepend the zclaw system prompt when absent so provider behavior is consistent across API backends, with host coverage added for payload insertion/non-duplication.</td>
+              </tr>
+              <tr>
+                <td><code>2.10.1</code></td>
+                <td>2026-03-03</td>
+                <td>Bugfix release: hardened <code>llm_request</code> invalid-argument handling, made rate-limit persistence failures visible/recoverable, and switched boot-count persistence parsing to strict validation with safe fallback behavior.</td>
+              </tr>
+              <tr>
+                <td><code>2.10.0</code></td>
+                <td>2026-03-03</td>
+                <td>Minor release: centralized built-in tool registration, documented two custom-tool paths (simple GPIO flows vs hosted HTTP-backed tools), added registry host coverage, and added troubleshooting guidance for breadboard-related ESP Wi-Fi interference.</td>
+              </tr>
+              <tr>
+                <td><code>2.9.1</code></td>
+                <td>2026-03-02</td>
+                <td>Bugfix release: hardened `boot_ok` startup/stack behavior and fixed the diagnostics verbose uptime formatting crash path, with added host coverage for both fixes.</td>
+              </tr>
+              <tr>
+                <td><code>2.9.0</code></td>
+                <td>2026-03-01</td>
+                <td>Minor release: installer now supports distro-aware Linux package installs (<code>apt-get</code>, <code>pacman</code>, <code>dnf</code>, <code>zypper</code>), improves non-interactive prompt safety defaults, and adds host coverage for package-manager detection/fallback behavior.</td>
+              </tr>
+              <tr>
+                <td><code>2.8.2</code></td>
+                <td>2026-03-01</td>
+                <td>Bugfix release: GPIO read paths now preserve driven output state (including <code>gpio_read_all</code>), with host regressions added for write/read persistence and HIGH→LOW roundtrip behavior.</td>
+              </tr>
+              <tr>
+                <td><code>2.8.1</code></td>
+                <td>2026-03-01</td>
+                <td>Bugfix release: added scoped runtime diagnostics (`get_diagnostics` and local <code>/diag</code>) and blocked flash/PSRAM-reserved GPIO6-11 on classic <code>esp32</code> targets to prevent WROOM/VROOM pin-crash paths.</td>
+              </tr>
+              <tr>
+                <td><code>2.8.0</code></td>
+                <td>2026-02-28</td>
+                <td>Bugfix release: defaulted classic ESP32 runtime UART routing to <code>uart0</code> and hardened install/flash flows with chip detection plus target-mismatch guardrails before flashing.</td>
+              </tr>
+              <tr>
+                <td><code>2.7.1</code></td>
+                <td>2026-02-23</td>
+                <td>Bugfix release: added first-class <code>esp32s3-box-3</code> board-preset support across build/flash scripts, target-mismatch guardrails, and host/CI coverage.</td>
+              </tr>
+              <tr>
+                <td><code>2.7.0</code></td>
+                <td>2026-02-23</td>
+                <td>Added Ollama backend support with custom endpoint provisioning (<code>--api-url</code>), set default Ollama model to <code>qwen3:8b</code>, and fixed API-check URL normalization plus LLM key re-init state handling.</td>
+              </tr>
+              <tr>
+                <td><code>2.6.1</code></td>
+                <td>2026-02-23</td>
+                <td>Bugfix release: OpenRouter now uses a shorter Telegram long-poll timeout to reduce TLS allocation pressure on memory-constrained boards; Anthropic/OpenAI polling behavior is unchanged.</td>
+              </tr>
+              <tr>
+                <td><code>2.6.0</code></td>
+                <td>2026-02-23</td>
+                <td>Added Telegram multi-chat allowlists with routed replies, provisioning support for comma-separated chat IDs, and fail-closed outbound target handling for unauthorized chat IDs.</td>
+              </tr>
+              <tr>
+                <td><code>2.5.3</code></td>
+                <td>2026-02-22</td>
+                <td>WiFi credential length validation now matches device byte limits, shared firmware credential helpers were introduced, and relay request-origin/content-type validation was tightened with expanded host coverage.</td>
+              </tr>
+              <tr>
+                <td><code>2.5.2</code></td>
+                <td>2026-02-22</td>
+                <td>Natural-language onboarding/examples refined in `/start` and Getting Started, with clearer Telegram provisioning guidance for both interactive and non-interactive flows.</td>
+              </tr>
+              <tr>
+                <td><code>2.5.1</code></td>
+                <td>2026-02-22</td>
+                <td>Adjusted capability-priority guidance so “what can you do?” answers lead with custom tools/schedules/memory/GPIO before optional I2C details.</td>
+              </tr>
+              <tr>
+                <td><code>2.5.0</code></td>
+                <td>2026-02-22</td>
+                <td>Added bulk <code>gpio_read_all</code> for one-call pin-state dumps, plus docs/tests and prompt guidance to avoid tool-round churn.</td>
+              </tr>
+              <tr>
+                <td><code>2.4.3</code></td>
+                <td>2026-02-22</td>
+                <td>Web relay host/CORS defaults tightened and encrypted-NVS startup behavior made fail-closed by default.</td>
+              </tr>
+              <tr>
+                <td><code>2.4.2</code></td>
+                <td>2026-02-22</td>
+                <td>Cron self-reschedule loop fixed, docs Field Guide expanded, and runtime-heap wording clarified.</td>
+              </tr>
+              <tr>
+                <td><code>2.4.1</code></td>
+                <td>2026-02-22</td>
+                <td>Persona tools added, persona routed through tool-calling path, prompt/runtime clarity updates.</td>
+              </tr>
+              <tr>
+                <td><code>2.4.0</code></td>
+                <td>2026-02-22</td>
+                <td>Cron responsiveness and plain-text behavior tuned for better real-world operation.</td>
+              </tr>
+              <tr>
+                <td><code>2.3.1</code></td>
+                <td>2026-02-22</td>
+                <td>Network diagnostics expanded; rate/stability thresholds adjusted.</td>
+              </tr>
+              <tr>
+                <td><code>2.3.0</code></td>
+                <td>2026-02-22</td>
+                <td>Telegram reliability hardening and backlog-clear tooling.</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section class="section">
+          <h2>Release Workflow</h2>
+          <pre># Bump version (patch/minor/major)
+./scripts/bump-version.sh patch
+
+# Validate
+./scripts/test.sh host
+
+# Commit + tag + push (example)
+git tag -a vX.Y.Z -m "zclaw vX.Y.Z"
+git push origin main
+git push origin vX.Y.Z</pre>
+        </section>
+
+        <footer class="footer">
+          <p>Back to <a href="index.html">chapter overview</a> or read <a href="use-cases.html">use cases</a>.</p>
+        </footer>
+      </main>
+    </div>
+    <script src="app.js"></script>
+  </body>
+</html>
