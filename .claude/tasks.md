@@ -10,18 +10,18 @@
 - [x] Create Cardputer ADV board config — sdkconfig.defaults + partition table for 8MB flash `[M]` #setup ✅ 2026-04-06
 - [x] Verify zclaw core compiles for ESP32-S3 target `[S]` #setup 👤 manual ✅ 2026-04-06
 - [x] Flash and confirm headless mode works (WiFi, Telegram, serial CLI) `[M]` #setup #testing 👤 manual ✅ 2026-04-06
-- [ ] Implement ST7789V2 SPI display driver `[L]` #backend #hal
-  - [ ] Minimal terminal renderer (fixed-width font, char grid, auto-scroll)
-  - [ ] Status bar (WiFi, battery %, model indicator)
-  - [ ] Input bar with cursor
-- [ ] Implement TCA8418 I2C keyboard driver `[M]` #backend #hal
-  - [ ] 56-key mapping including Fn, Ctrl, Alt, Opt modifiers
-  - [ ] Key repeat, debounce
-  - [ ] Line buffer with basic editing (backspace, Ctrl+U clear)
-- [ ] Create local channel (keyboard → agent loop → display) `[M]` #backend
-  - [ ] Pipe keyboard input into zclaw inbound message queue
-  - [ ] Route agent responses to display
-  - [ ] All three channels (local, Telegram, serial) active simultaneously
+- [x] Implement ST7789V2 SPI display driver `[L]` #backend #hal ✅ 2026-04-06
+  - [x] Minimal terminal renderer (fixed-width font, char grid, auto-scroll)
+  - [x] Status bar (WiFi, battery %, model indicator)
+  - [x] Input bar with cursor
+- [x] Implement TCA8418 I2C keyboard driver `[M]` #backend #hal ✅ 2026-04-06
+  - [x] 56-key mapping including Fn, Ctrl, Alt, Opt modifiers
+  - [x] Key repeat, debounce
+  - [x] Line buffer with basic editing (backspace, Ctrl+U clear)
+- [x] Create local channel (keyboard → agent loop → display) `[M]` #backend ✅ 2026-04-06
+  - [x] Pipe keyboard input into zclaw inbound message queue
+  - [x] Route agent responses to display
+  - [x] All three channels (local, Telegram, serial) active simultaneously
 
 ### P1 -- Should do this week
 
